@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Dimensions, Animated, Easing } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated, Easing } from 'react-native';
 import { MaterialIcons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 const { height } = Dimensions.get('window');
 
@@ -37,21 +38,20 @@ export default function QuickActionsOverlay({ visible, onClose }: QuickActionsOv
   // Animation state
   const slideAnim = useRef(new Animated.Value(height)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [showModal, setShowModal] = useState(visible);
+  const router = useRouter();
 
   useEffect(() => {
     if (visible) {
-      setShowModal(true);
       Animated.parallel([
         Animated.timing(slideAnim, {
           toValue: 0,
-          duration: 600, // Reduced speed (increased duration) for smoother transition
+          duration: 300,
           useNativeDriver: true,
           easing: Easing.out(Easing.cubic),
         }),
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 600,
+          duration: 300,
           useNativeDriver: true,
         }),
       ]).start();
@@ -59,99 +59,105 @@ export default function QuickActionsOverlay({ visible, onClose }: QuickActionsOv
       Animated.parallel([
         Animated.timing(slideAnim, {
           toValue: height,
-          duration: 500,
+          duration: 250,
           useNativeDriver: true,
           easing: Easing.in(Easing.cubic),
         }),
         Animated.timing(fadeAnim, {
           toValue: 0,
-          duration: 500,
+          duration: 250,
           useNativeDriver: true,
         }),
-      ]).start(() => setShowModal(false));
+      ]).start();
     }
   }, [visible]);
 
+  const handleActionPress = (route: string) => {
+      onClose();
+      // Small delay to allow overlay to close first
+      setTimeout(() => {
+          router.push(route as any);
+      }, 300);
+  };
+
   return (
-    <Modal
-      transparent={true}
-      visible={showModal}
-      onRequestClose={onClose}
+    <View
+      style={[styles.overlayContainer, StyleSheet.absoluteFill, { zIndex: 1000, elevation: 1000 }]}
+      pointerEvents={visible ? 'auto' : 'none'}
     >
-      <View style={styles.overlayContainer}>
-        {/* Backdrop - clicking it closes the modal */}
-        <Animated.View 
-          style={[
-            styles.backdrop, 
-            { opacity: fadeAnim }
-          ]}
-        >
-          <TouchableOpacity 
-            style={StyleSheet.absoluteFill} 
-            activeOpacity={1} 
-            onPress={onClose} 
+      {/* Backdrop - clicking it closes the modal */}
+      <Animated.View 
+        style={[
+          styles.backdrop, 
+          { opacity: fadeAnim }
+        ]}
+      >
+        <TouchableOpacity 
+          style={StyleSheet.absoluteFill} 
+          activeOpacity={1} 
+          onPress={onClose} 
+        />
+      </Animated.View>
+
+      {/* Content Container */}
+      <Animated.View 
+        style={[
+          styles.container, 
+          { transform: [{ translateY: slideAnim }] }
+        ]}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>Quick Actions</Text>
+          <Text style={styles.subtitle}>Yeni Əlavə Et</Text>
+        </View>
+
+        <View style={styles.grid}>
+          <QuickActionButton 
+              title="Add Steps" 
+              subtitle="Addım Sayar" 
+              IconComponent={MaterialCommunityIcons} 
+              iconName="shoe-print" 
+              onPress={() => handleActionPress('/screens/AddStepsScreen')}
           />
-        </Animated.View>
+          <QuickActionButton 
+              title="Log Water" 
+              subtitle="Su İçmək" 
+              IconComponent={MaterialIcons} 
+              iconName="water-drop" 
+          />
+          <QuickActionButton 
+              title="Sleep Alarm" 
+              subtitle="Yuxu Alarmı" 
+              IconComponent={Feather} 
+              iconName="moon" 
+          />
+          <QuickActionButton 
+              title="Add Meal" 
+              subtitle="Qida Proqramı" 
+              IconComponent={MaterialIcons} 
+              iconName="restaurant" 
+          />
+          <QuickActionButton 
+              title="Log Weight" 
+              subtitle="Çəki Qeyd Et" 
+              IconComponent={MaterialIcons} 
+              iconName="monitor-weight" 
+          />
+          <QuickActionButton 
+              title="Start Activity" 
+              subtitle="Fəaliyyətə Başla" 
+              IconComponent={Feather} 
+              iconName="activity" 
+          />
+        </View>
 
-        {/* Content Container */}
-        <Animated.View 
-          style={[
-            styles.container, 
-            { transform: [{ translateY: slideAnim }] }
-          ]}
-        >
-          <View style={styles.header}>
-            <Text style={styles.title}>Quick Actions</Text>
-            <Text style={styles.subtitle}>Yeni Əlavə Et</Text>
-          </View>
-
-          <View style={styles.grid}>
-            <QuickActionButton 
-                title="Add Steps" 
-                subtitle="Addım Sayar" 
-                IconComponent={MaterialCommunityIcons} 
-                iconName="shoe-print" 
-            />
-            <QuickActionButton 
-                title="Log Water" 
-                subtitle="Su İçmək" 
-                IconComponent={MaterialIcons} 
-                iconName="water-drop" 
-            />
-            <QuickActionButton 
-                title="Sleep Alarm" 
-                subtitle="Yuxu Alarmı" 
-                IconComponent={Feather} 
-                iconName="moon" 
-            />
-            <QuickActionButton 
-                title="Add Meal" 
-                subtitle="Qida Proqramı" 
-                IconComponent={MaterialIcons} 
-                iconName="restaurant" 
-            />
-            <QuickActionButton 
-                title="Log Weight" 
-                subtitle="Çəki Qeyd Et" 
-                IconComponent={MaterialIcons} 
-                iconName="monitor-weight" 
-            />
-            <QuickActionButton 
-                title="Start Activity" 
-                subtitle="Fəaliyyətə Başla" 
-                IconComponent={Feather} 
-                iconName="activity" 
-            />
-          </View>
-
-          <View style={styles.closeButtonContainer}>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton} activeOpacity={0.8}>
-              <Feather name="x" size={32} color="#1f230f" />
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
-      </View>
-    </Modal>
+        <View style={styles.closeButtonContainer}>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton} activeOpacity={0.8}>
+            <Feather name="x" size={32} color="#1f230f" />
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    </View>
   );
 }
 

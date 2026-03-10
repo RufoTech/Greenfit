@@ -138,7 +138,12 @@ export default function WorkoutDetailsScreen() {
 
           <View style={styles.exercisesList}>
             {workout.exercises.map((exercise, index) => (
-              <View key={exercise.id} style={[styles.exerciseItem, index === workout.exercises.length - 1 && styles.lastItem]}>
+              <TouchableOpacity 
+                key={exercise.id} 
+                style={[styles.exerciseItem, index === workout.exercises.length - 1 && styles.lastItem]}
+                onPress={() => router.push('/screens/ExerciseDetailScreen')}
+                activeOpacity={0.7}
+              >
                 <View style={styles.exerciseImageContainer}>
                   <Image source={{ uri: exercise.image }} style={styles.exerciseImage} />
                 </View>
@@ -154,7 +159,7 @@ export default function WorkoutDetailsScreen() {
                   </View>
                 </View>
                 <MaterialIcons name="drag-indicator" size={24} color="#94a3b8" />
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         </View>

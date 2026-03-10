@@ -70,6 +70,9 @@ export default function RootLayout() {
         <Stack.Screen name="screens/LevelSelectionScreen" />
         <Stack.Screen name="screens/PersonalDataScreen" />
         <Stack.Screen name="screens/CreateProgramScreen" />
+        <Stack.Screen name="screens/WorkoutDetailsScreen" />
+        <Stack.Screen name="screens/ExerciseDetailScreen" />
+        <Stack.Screen name="screens/AddStepsScreen" />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />
