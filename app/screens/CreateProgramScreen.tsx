@@ -1,0 +1,675 @@
+import { Feather, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import {
+  Image,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  Alert,
+  Modal,
+} from 'react-native';
+
+export default function CreateProgramScreen() {
+  const router = useRouter();
+  const [isDark, setIsDark] = useState(true);
+  const [programName, setProgramName] = useState('');
+  const [focus, setFocus] = useState('Gain Muscle');
+  const [selectedWeek, setSelectedWeek] = useState(1);
+  const [showLimitAlert, setShowLimitAlert] = useState(false);
+  const weeks = [1, 2, 3, 4];
+
+  // Initial workout data structure - organized by weeks
+  const [workoutsByWeek, setWorkoutsByWeek] = useState({
+    1: [
+      { id: 1, type: 'workout', title: 'Upper Body Power', subtitle: '6 exercises • 45 mins', day: 1, images: [
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuAKbZKbErvtnWKLTiLQvWfArW6zewG6Q0u6fVG0SUBeou_58u_qlral7NRqIbTQ_PquUqZrFJKq8gIyS7sWK5-_vpSfOFgVuaT4DIEg8A9KQNz_XkpV0klfrHSRdsnSXY-O9iqs2srKUNLLay-cJU_njfGGtfSMLeubiwB2kSxP7vUx8vKMSRFDoZKYfGiZuVdjjWkm9YJSZAY-mi0EUe7xMzpmsFP10hMFU0sDP6zpxUOdUKwu9T8jQAIxr3kcYtJB6ONu3RM_M4s',
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuCl_YOPa2bbx2UJQk9yWuVc3ATdJm8rJe1vfrKGTuYbsOE5xVoXItSm7heq6-lm2u1NwPDHVX9OWzQ97GeoMxcJ7lCyt21sZgdRAIpx5vang-sfgQ0O9SbeQ2MBNzfe9nAfhnUJaUlzO2bOdrRDcmyJGGfPTEu5xDylyBURFqONGInaBld7b9aZ1D3Nyr78dq5l9n_TtC8891YFkFXv4Lky3TJrAO_sdbQofrFZZJHoHP4X_yI11AgYbr1DNYxepiN0lra2vESZvSY'
+      ], extraCount: 4 },
+      { id: 2, type: 'workout', title: 'Lower Body Strength', subtitle: '5 exercises • 55 mins', day: 2, images: [], extraCount: 0 },
+      { id: 3, type: 'rest', title: 'Active Rest Day', subtitle: '', day: 3, images: [], extraCount: 0 },
+    ],
+    2: [],
+    3: [],
+    4: []
+  });
+
+  // Get current week's workouts
+  const currentWorkouts = workoutsByWeek[selectedWeek] || [];
+
+  // Focus Options matching HTML icons
+  const focusOptions = [
+    { id: 'Gain Muscle', icon: 'fitness-center', iconLib: MaterialIcons, label: 'Gain Muscle' }, // exercise -> fitness-center (closest)
+    { id: 'Lose Weight', icon: 'scale', iconLib: MaterialCommunityIcons, label: 'Lose Weight' }, // scale -> scale (MCI)
+    { id: 'Get Fitter', icon: 'run', iconLib: MaterialCommunityIcons, label: 'Get Fitter' }, // directions_run -> run (MCI)
+    { id: 'Get Stronger', icon: 'dumbbell', iconLib: MaterialCommunityIcons, label: 'Get Stronger' }, // fitness_center -> dumbbell (MCI)
+  ];
+
+  const theme = {
+    bg: isDark ? '#1f230f' : '#f8f8f5',
+    text: isDark ? '#f1f5f9' : '#0f172a', // text-slate-100 : text-slate-900
+    subtext: isDark ? '#94a3b8' : '#64748b', // text-slate-500
+    primary: '#ccff00',
+    cardBg: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(204, 255, 0, 0.05)',
+    cardBorder: isDark ? 'rgba(204, 255, 0, 0.2)' : 'rgba(204, 255, 0, 0.2)',
+    inputBg: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(204, 255, 0, 0.05)',
+  };
+
+  const handleSave = () => {
+    // Save program logic here
+    router.replace('/(tabs)/programs');
+  };
+
+  const addWorkout = () => {
+    if (currentWorkouts.length >= 7) {
+      setShowLimitAlert(true);
+      return;
+    }
+
+    const nextDay = currentWorkouts.length + 1;
+    const newWorkout = { 
+      id: Date.now(), 
+      type: 'workout', 
+      title: 'New Workout', 
+      subtitle: '0 exercises • 0 mins', 
+      day: nextDay, 
+      images: [], 
+      extraCount: 0 
+    };
+
+    setWorkoutsByWeek({
+      ...workoutsByWeek,
+      [selectedWeek]: [...currentWorkouts, newWorkout]
+    });
+  };
+
+  const addRestDay = () => {
+    if (currentWorkouts.length >= 7) {
+      setShowLimitAlert(true);
+      return;
+    }
+
+    const nextDay = currentWorkouts.length + 1;
+    const newRestDay = { 
+      id: Date.now(), 
+      type: 'rest', 
+      title: 'Rest Day', 
+      subtitle: '', 
+      day: nextDay, 
+      images: [], 
+      extraCount: 0 
+    };
+
+    setWorkoutsByWeek({
+      ...workoutsByWeek,
+      [selectedWeek]: [...currentWorkouts, newRestDay]
+    });
+  };
+
+  const removeWorkout = (id: number) => {
+    const updatedWeekWorkouts = currentWorkouts.filter(w => w.id !== id).map((w, index) => ({
+      ...w,
+      day: index + 1
+    }));
+
+    setWorkoutsByWeek({
+      ...workoutsByWeek,
+      [selectedWeek]: updatedWeekWorkouts
+    });
+  };
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={theme.bg} />
+      
+      {/* Header */}
+      <View style={[styles.header, { borderBottomColor: 'rgba(204, 255, 0, 0.1)' }]}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity 
+            style={[styles.iconButton]}
+            onPress={() => router.back()}
+          >
+            <MaterialIcons name="arrow-back" size={24} color={theme.text} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>Create Program</Text>
+        </View>
+        {/* Added theme toggle for testing, though not in HTML design specifically, it's good for dev */}
+        <TouchableOpacity 
+          style={[styles.iconButton]}
+          onPress={() => setIsDark(!isDark)}
+        >
+          {isDark ? <Feather name="sun" size={20} color={theme.subtext} /> : <Feather name="moon" size={20} color={theme.subtext} />}
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        
+        {/* Program Name */}
+        <View style={styles.section}>
+          <Text style={[styles.label, { color: theme.text }]}>PROGRAM NAME</Text>
+          <TextInput
+            style={[styles.input, { 
+              backgroundColor: theme.inputBg, 
+              color: theme.text,
+              borderColor: 'rgba(204, 255, 0, 0.2)'
+            }]}
+            placeholder="e.g., My Summer Body"
+            placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
+            value={programName}
+            onChangeText={setProgramName}
+          />
+        </View>
+
+        {/* Training Focus */}
+        <View style={styles.section}>
+          <Text style={[styles.label, { color: theme.text }]}>TRAINING FOCUS</Text>
+          <View style={styles.grid}>
+            {focusOptions.map((option) => {
+              const isSelected = focus === option.id;
+              const IconLib = option.iconLib;
+              return (
+                <TouchableOpacity
+                  key={option.id}
+                  onPress={() => setFocus(option.id)}
+                  style={[
+                    styles.focusButton,
+                    { 
+                      backgroundColor: isSelected ? theme.primary : theme.cardBg,
+                      borderColor: isSelected ? theme.primary : 'transparent'
+                    }
+                  ]}
+                >
+                  {/* @ts-ignore */}
+                  <IconLib name={option.icon} size={20} color={isSelected ? '#1f230f' : theme.text} />
+                  <Text style={[
+                    styles.focusText, 
+                    { color: isSelected ? '#1f230f' : theme.text }
+                  ]} numberOfLines={1}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Select Workouts */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.label, { color: theme.text, marginBottom: 0 }]}>SELECT WORKOUTS</Text>
+          </View>
+
+          {/* Week Selector */}
+          <View style={styles.weekSelector}>
+            {weeks.map((week) => (
+              <TouchableOpacity
+                key={week}
+                onPress={() => setSelectedWeek(week)}
+                style={[
+                  styles.weekButton,
+                  selectedWeek === week ? styles.weekButtonSelected : styles.weekButtonUnselected,
+                  { 
+                    backgroundColor: selectedWeek === week ? theme.primary : theme.cardBg,
+                    borderColor: selectedWeek === week ? theme.primary : 'transparent'
+                  }
+                ]}
+              >
+                <Text style={[
+                  styles.weekText,
+                  { color: selectedWeek === week ? '#1f230f' : theme.text }
+                ]}>Week {week}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={styles.workoutsContainer}>
+            {currentWorkouts.map((item, index) => (
+              <View key={item.id}>
+                {item.type === 'workout' ? (
+                  <View style={[styles.workoutCard, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder }]}>
+                    <View style={styles.workoutHeader}>
+                      <View>
+                        <View style={styles.dayBadge}>
+                          <Text style={styles.dayBadgeText}>DAY {item.day}</Text>
+                        </View>
+                        <Text style={[styles.workoutTitle, { color: theme.text }]}>{item.title}</Text>
+                      </View>
+                      <View style={{ flexDirection: 'row' }}>
+                         <TouchableOpacity style={[styles.actionButton, { marginRight: 8 }]} onPress={() => removeWorkout(item.id)}>
+                          <MaterialCommunityIcons name="delete-outline" size={20} color="#ef4444" />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/screens/AddWorkoutScreen')}>
+                          <MaterialIcons name="edit" size={20} color={theme.subtext} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <Text style={[styles.workoutMeta, { color: theme.subtext }]}>{item.subtitle}</Text>
+                    
+                    {item.images.length > 0 && (
+                      <View style={styles.avatarsContainer}>
+                        {item.images.map((img, idx) => (
+                          <Image 
+                            key={idx}
+                            source={{ uri: img }} 
+                            style={[styles.avatar, { borderColor: theme.bg, marginLeft: idx > 0 ? -8 : 0 }]} 
+                          />
+                        ))}
+                        {item.extraCount > 0 && (
+                          <View style={[styles.avatarMore, { borderColor: theme.bg, backgroundColor: 'rgba(204, 255, 0, 0.2)', marginLeft: -8 }]}>
+                            <Text style={[styles.avatarMoreText, { color: isDark ? theme.primary : '#1f230f' }]}>+{item.extraCount}</Text>
+                          </View>
+                        )}
+                      </View>
+                    )}
+                  </View>
+                ) : (
+                  // Rest Day Card
+                  <View style={[
+                    styles.restCard, 
+                    { 
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#f1f5f9',
+                      borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#cbd5e1'
+                    }
+                  ]}>
+                    <View style={styles.restContent}>
+                      <View style={[styles.restIconContainer]}>
+                        <MaterialCommunityIcons name="bed-empty" size={20} color={isDark ? '#94a3b8' : '#64748b'} />
+                      </View>
+                      <View>
+                        <Text style={[styles.restDayText, { color: theme.subtext }]}>DAY {item.day}</Text>
+                        <Text style={[styles.restTitle, { color: theme.text }]}>{item.title}</Text>
+                      </View>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                         <TouchableOpacity style={[styles.actionButton, { marginRight: 8 }]} onPress={() => removeWorkout(item.id)}>
+                          <MaterialCommunityIcons name="delete-outline" size={20} color="#ef4444" />
+                        </TouchableOpacity>
+                         <TouchableOpacity>
+                          <Text style={[styles.changeText, { color: theme.primary }]}>Change</Text>
+                        </TouchableOpacity>
+                    </View>
+                   
+                  </View>
+                )}
+              </View>
+            ))}
+
+            {/* Add Buttons Grid */}
+            <View style={styles.addButtonsGrid}>
+              <TouchableOpacity 
+                style={[styles.addWorkoutButton, { backgroundColor: theme.primary }]}
+                onPress={addWorkout}
+              >
+                <MaterialIcons name="add-circle-outline" size={24} color="#1f230f" />
+                <Text style={styles.addWorkoutText}>Add Workout</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.addRestButton, { borderColor: theme.primary, backgroundColor: isDark ? 'rgba(204, 255, 0, 0.05)' : 'rgba(204, 255, 0, 0.05)' }]}
+                onPress={addRestDay}
+              >
+                <MaterialCommunityIcons name="bed-empty" size={24} color={theme.primary} />
+                <Text style={[styles.addRestText, { color: theme.primary }]}>Add Rest Day</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {/* Bottom Padding */}
+        <View style={{ height: 100 }} />
+
+      </ScrollView>
+
+      {/* Limit Alert Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showLimitAlert}
+        onRequestClose={() => setShowLimitAlert(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.alertBox, { backgroundColor: isDark ? '#1f230f' : '#ffffff', borderColor: theme.primary }]}>
+            <View style={styles.alertIconContainer}>
+              <MaterialIcons name="warning" size={40} color={theme.primary} />
+            </View>
+            <Text style={[styles.alertTitle, { color: theme.text }]}>Maximum Limit Reached</Text>
+            <Text style={[styles.alertMessage, { color: theme.subtext }]}>
+              You can only add up to 7 days of workouts/rest per week.
+            </Text>
+            <TouchableOpacity 
+              style={[styles.alertButton, { backgroundColor: theme.primary }]}
+              onPress={() => setShowLimitAlert(false)}
+            >
+              <Text style={styles.alertButtonText}>Understood</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Footer */}
+      <View style={[styles.footer, { backgroundColor: theme.bg, borderTopColor: 'rgba(204, 255, 0, 0.1)' }]}>
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <Text style={styles.saveButtonText}>SAVE PROGRAM</Text>
+        </TouchableOpacity>
+      </View>
+
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingTop: Platform.OS === 'android' ? 30 : 0,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginLeft: 8,
+    fontFamily: Platform.OS === 'ios' ? 'Inter' : 'System',
+  },
+  iconButton: {
+    padding: 8,
+    borderRadius: 20,
+  },
+  content: {
+    padding: 16,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginBottom: 12,
+    paddingLeft: 4,
+    textTransform: 'uppercase',
+  },
+  input: {
+    height: 56,
+    borderRadius: 999, // rounded-xl
+    paddingHorizontal: 16,
+    fontSize: 18,
+    borderWidth: 1,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  focusButton: {
+    width: '48%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 2,
+    gap: 8,
+  },
+  focusText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  weekSelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    gap: 8,
+  },
+  weekButton: {
+    flex: 1,
+    height: 40,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  weekButtonSelected: {
+    // styles handled inline dynamically
+  },
+  weekButtonUnselected: {
+    // styles handled inline dynamically
+  },
+  weekText: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  workoutsContainer: {
+    gap: 12,
+  },
+  workoutCard: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  workoutHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  dayBadge: {
+    backgroundColor: 'rgba(204, 255, 0, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+    marginBottom: 4,
+  },
+  dayBadgeText: {
+    color: '#ccff00',
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  workoutTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  actionButton: {
+    padding: 4,
+  },
+  workoutMeta: {
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  avatarsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+  },
+  avatarMore: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarMoreText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  restCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    opacity: 0.8,
+  },
+  restContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  restIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  restDayText: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  restTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  changeText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  addButtonsGrid: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  addWorkoutButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 56,
+    borderRadius: 12,
+    gap: 8,
+    shadowColor: "#ccff00",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  addWorkoutText: {
+    color: '#1f230f',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  addRestButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 56,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    gap: 8,
+  },
+  addRestText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  footer: {
+    padding: 16,
+    borderTopWidth: 1,
+  },
+  saveButton: {
+    backgroundColor: '#ccff00',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: "#ccff00",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  saveButtonText: {
+    color: '#1f230f',
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  alertBox: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 2,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  alertIconContainer: {
+    marginBottom: 16,
+    padding: 12,
+    borderRadius: 50,
+    backgroundColor: 'rgba(204, 255, 0, 0.1)',
+  },
+  alertTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  alertMessage: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  alertButton: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  alertButtonText: {
+    color: '#1f230f',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});
