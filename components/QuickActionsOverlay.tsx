@@ -73,11 +73,11 @@ export default function QuickActionsOverlay({ visible, onClose }: QuickActionsOv
   }, [visible]);
 
   const handleActionPress = (route: string) => {
-      onClose();
-      // Small delay to allow overlay to close first
+      router.push(route as any);
+      // Close the menu after navigation has started to ensure instant transition
       setTimeout(() => {
-          router.push(route as any);
-      }, 300);
+          onClose();
+      }, 500);
   };
 
   return (
@@ -124,18 +124,21 @@ export default function QuickActionsOverlay({ visible, onClose }: QuickActionsOv
               subtitle="Su İçmək" 
               IconComponent={MaterialIcons} 
               iconName="water-drop" 
+              onPress={() => handleActionPress('/screens/LogWaterScreen')}
           />
           <QuickActionButton 
               title="Sleep Alarm" 
               subtitle="Yuxu Alarmı" 
               IconComponent={Feather} 
               iconName="moon" 
+              onPress={() => handleActionPress('/screens/SleepAlarmScreen')}
           />
           <QuickActionButton 
               title="Add Meal" 
               subtitle="Qida Proqramı" 
               IconComponent={MaterialIcons} 
               iconName="restaurant" 
+              onPress={() => handleActionPress('/screens/AddMealScreen')}
           />
           <QuickActionButton 
               title="Log Weight" 

@@ -154,7 +154,7 @@ export default function CreateCustomWorkoutScreen() {
       >
         <View style={styles.bottomActions}>
           <TouchableOpacity style={styles.draftButton}>
-            <Text style={styles.draftButtonText}>Draft / Qaralama</Text>
+            <Text style={styles.draftButtonText}>Draft</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.publishButton}>
             <Text style={styles.publishButtonText}>Publish Program / Proqramı Dərc Et</Text>
