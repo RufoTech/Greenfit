@@ -72,14 +72,14 @@ export default function LoginScreen() {
           <TouchableOpacity onPress={() => router.replace('/')} style={styles.backButton}>
             <MaterialIcons name="arrow-back" size={24} color={colors.textMain} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>FitFlow</Text>
+          <Text style={styles.headerTitle}>GreenFit</Text>
           <View style={{ width: 40 }} />
         </View>
 
         {/* Hero Section */}
         <View style={styles.heroSection}>
-          <Text style={styles.heroTitle}>Xoş Gəlmisiniz / Welcome Back</Text>
-          <Text style={styles.heroSubtitle}>Məşqinizə davam edin / Continue your workout journey</Text>
+          <Text style={styles.heroTitle}>Welcome</Text>
+          <Text style={styles.heroSubtitle}> Continue your workout journey</Text>
         </View>
 
         {/* Login Form */}
@@ -87,10 +87,10 @@ export default function LoginScreen() {
           
           {/* Email Field */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>E-poçt və ya Telefon / Email or Phone</Text>
+            <Text style={styles.label}> Email or Phone</Text>
             <TextInput 
               style={styles.input}
-              placeholder="nümunə@fitflow.com / example@fitflow.com"
+              placeholder="example@fitflow.com"
               placeholderTextColor={colors.textMuted}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -99,7 +99,7 @@ export default function LoginScreen() {
 
           {/* Password Field */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Şifrə / Password</Text>
+            <Text style={styles.label}>Password</Text>
             <View style={styles.passwordContainer}>
               <TextInput 
                 style={[styles.input, { flex: 1, paddingRight: 50 }]}
@@ -121,8 +121,11 @@ export default function LoginScreen() {
           </View>
 
           {/* Forgot Password */}
-          <TouchableOpacity style={styles.forgotButton}>
-            <Text style={styles.forgotText}>Şifrəni unutmusunuz? / Forgot Password?</Text>
+          <TouchableOpacity 
+            style={styles.forgotButton}
+            onPress={() => router.push('/screens/ForgotPasswordScreen')}
+          >
+            <Text style={styles.forgotText}>Forgot Password?</Text>
           </TouchableOpacity>
 
           {/* Main Login Button */}
@@ -131,7 +134,7 @@ export default function LoginScreen() {
             activeOpacity={0.9} 
             onPress={handleNormalLogin} // Fonksiyon değiştirildi
           >
-            <Text style={styles.loginButtonText}>Giriş / Login</Text>
+            <Text style={styles.loginButtonText}>Login</Text>
           </TouchableOpacity>
 
         </View>
@@ -139,7 +142,7 @@ export default function LoginScreen() {
         {/* Divider */}
         <View style={styles.dividerContainer}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>VƏ YA / OR</Text>
+          <Text style={styles.dividerText}> OR</Text>
           <View style={styles.dividerLine} />
         </View>
 
@@ -147,20 +150,20 @@ export default function LoginScreen() {
         <View style={styles.socialContainer}>
           <TouchableOpacity style={styles.socialButton} onPress={onGoogleButtonPress}>
             <GoogleIcon width={24} height={24} />
-            <Text style={styles.socialButtonText}>Google ilə davam edin</Text>
+            <Text style={styles.socialButtonText}>Continue Google</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.socialButton}>
             <FontAwesome name="apple" size={24} color={colors.textMain} />
-            <Text style={styles.socialButtonText}>Apple ilə davam edin</Text>
+            <Text style={styles.socialButtonText}>Continue Apple</Text>
           </TouchableOpacity>
         </View>
 
         {/* Footer Link */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Hesabınız yoxdur? </Text>
+          <Text style={styles.footerText}>Don't have an account? </Text>
           <TouchableOpacity onPress={() => router.push('/register')}>
-            <Text style={styles.signUpText}>Qeydiyyatdan keçin / Sign up</Text>
+            <Text style={styles.signUpText}>Sign up</Text>
           </TouchableOpacity>
         </View>
 

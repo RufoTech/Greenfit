@@ -91,7 +91,7 @@ const CustomTabBar = ({ state, descriptors, navigation, onAddPress, isQuickActio
                         <MaterialIcons name="add" size={32} color="#1f230f" style={{ marginLeft: 2 }} />
                     </Animated.View>
                     <Text style={[styles.navText, isFocused && styles.activeText]}>
-                        Create
+                        ACTIONS
                     </Text>
                 </TouchableOpacity>
             );

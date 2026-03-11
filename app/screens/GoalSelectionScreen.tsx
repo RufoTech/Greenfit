@@ -22,32 +22,28 @@ const { width } = Dimensions.get('window');
 const goals = [
   {
     id: 'weight_loss',
-    titleAz: 'Çəki İtirmək',
-    titleEn: 'Lose Weight',
+    title: 'Lose Weight',
     icon: 'fitness-center', // MaterialIcons
     iconLib: 'MaterialIcons',
     bgImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuBXnNu83e2klFRw2X6pXr29aAU1JZCnmBEQ7mafMOUNIYfGeNV4J6shdvRYd0clMdCTnwKjRrSePvkmT-oDX33ryWUrMOdNpFpPlq83NxG-K1sbVDEFAopC41DZhL7PkqkgD2UBXkn09vah2QUiwI5PE-uTNRBxAzMChtFp4jgJSMTTJFZwK9X0_FToBFMTRrNgqdbrHwDvOJo0Qy_mCrTAgApA-rRcncepLC5CLMBIs7kNQ69inwU8fEqZ-yf13nbfDj7xh_MkL2k"
   },
   {
     id: 'gain_muscle',
-    titleAz: 'Əzələ Yığmaq',
-    titleEn: 'Gain Muscle',
+    title: 'Gain Muscle',
     icon: 'activity', // Feather
     iconLib: 'Feather',
     bgImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuA9E6NfMrjuYEIyk5UVaNCa0jHaDstQ9kDmxZZc0_hx-T16QDPUh1SaAi0ROM7oaOHENdqa4I4LNuqjSqngiD3TuOzrd8zET_IC6jIFZjoOZooPCDp7uaT_XPF3tkoDqHo2b4Xysk1C3y3dfpwQgIAUwhicmHchK9WYK5el0ZF89GDj8hwL6bG1U1fwr9Yo86Rs72nDhOL5QmomLaFtROb3WTtUbVSx83qeZ8bNO3_OZbuw7_rKGiuoBleaUbDbbV4kqU2CPVroRL8"
   },
   {
     id: 'get_fitter',
-    titleAz: 'Daha Fit Olmaq',
-    titleEn: 'Get Fitter',
+    title: 'Get Fitter',
     icon: 'local-fire-department', // MaterialIcons
     iconLib: 'MaterialIcons',
     bgImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuDMvkJcD0sPUEJLXm1-lfc0ZDvPKtwkJBKAd9X2wmTkzw6OHQhPXn_mmpKOoSDJJy7LPclGvMiPC5t9SV8uz_KskcnAuftXp1PsSWT2-VsDTcHSzE1CoF1IFAq5KzHfxdtsMWEHGQNXQLpEJii79blw_3fikBgMTrBxmXwE7mWu_6xZKysryQ0F2zw7sNVg3SCZ9o3_SFsMYOzxPJTpcbozZhr0dr9W3cNJKcX7RXCYHNkCL3_-5ibJy8SMt2yKSvyufUcAhtnnlz8"
   },
   {
     id: 'get_stronger',
-    titleAz: 'Güclənmək',
-    titleEn: 'Get Stronger',
+    title: 'Get Stronger',
     icon: 'flash', // Ionicons
     iconLib: 'Ionicons',
     bgImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuBx-xRVIYykSuAmjQtQZT62MsZ3qbmb185sCRscnb4NDXUgWwo0YBtsknvyYaHr5YXHh1oSNdBId2zcuwA55ifXbhmqjxLDkHA6Md4XWDfqSJZ4iBXp3hhk2tfl3JoiVwhgbWYDVBc4b1k9hzQOS2nuh8bcLJ-vgXBFBHZ4yHf3v94LxLSkRUaaqIP5ogtadyx0m7waIwMUqfdTc-HKguDTCeRx4KGilrMwFIfODDruyzh9tkG47mRl409rdwtaiTJwKyKonOjxUPc"
@@ -86,7 +82,7 @@ export default function GoalSelectionScreen() {
         {/* İrəliləyiş Zolağı */}
         <View style={styles.progressContainer}>
           <View style={styles.progressLabels}>
-            <Text style={styles.stepText}>ADDIM 1 / STEP 1</Text>
+            <Text style={styles.stepText}>STEP 1</Text>
             <Text style={styles.percentText}>25%</Text>
           </View>
           <View style={styles.progressBarBg}>
@@ -97,15 +93,9 @@ export default function GoalSelectionScreen() {
         {/* Başlıq */}
         <View style={styles.titleContainer}>
           <Text style={styles.mainTitle}>
-            Məqsədiniz Nədir?
-          </Text>
-          <Text style={styles.subTitle}>
             What is Your Goal?
           </Text>
           <Text style={styles.description}>
-            Sizin üçün ən uyğun planı hazırlamağımıza kömək edin.
-          </Text>
-          <Text style={styles.descriptionEn}>
             Help us prepare the most suitable plan for you.
           </Text>
         </View>
@@ -134,8 +124,7 @@ export default function GoalSelectionScreen() {
                   </View>
                   
                   <View style={styles.cardTextContainer}>
-                    <Text style={styles.cardTitle}>{goal.titleAz}</Text>
-                    <Text style={styles.cardSubtitle}>{goal.titleEn}</Text>
+                    <Text style={styles.cardTitle}>{goal.title}</Text>
                   </View>
 
                   <View style={styles.checkIconContainer}>
@@ -180,7 +169,7 @@ export default function GoalSelectionScreen() {
           activeOpacity={0.8}
           onPress={handleNext}
         >
-          <Text style={styles.nextButtonText}>Növbəti / Next</Text>
+          <Text style={styles.nextButtonText}>Next</Text>
           <MaterialIcons name="arrow-forward" size={24} color="#1f230f" />
         </TouchableOpacity>
       </LinearGradient>

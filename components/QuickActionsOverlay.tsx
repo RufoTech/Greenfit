@@ -146,12 +146,7 @@ export default function QuickActionsOverlay({ visible, onClose }: QuickActionsOv
               iconName="monitor-weight" 
               onPress={() => handleActionPress('/screens/LogWeightScreen')}
           />
-          <QuickActionButton 
-              title="Start Activity" 
-              subtitle="" 
-              IconComponent={Feather} 
-              iconName="activity" 
-          />
+          <View style={styles.actionButton} />
         </View>
 
         <View style={styles.closeButtonContainer}>

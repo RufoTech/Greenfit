@@ -83,8 +83,8 @@ export default function RegisterScreen() {
 
           {/* Title Section */}
           <View style={styles.titleSection}>
-            <Text style={styles.title}>Hesab Yaradın / Create Account</Text>
-            <Text style={styles.subtitle}>Fitnes səyahətinizə başlayın / Start your fitness journey</Text>
+            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.subtitle}>Start your fitness journey</Text>
           </View>
 
           {/* Form Section */}
@@ -92,7 +92,7 @@ export default function RegisterScreen() {
             
             {/* Full Name */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Ad Soyad / Full Name</Text>
+              <Text style={styles.label}>Full Name</Text>
               <TextInput 
                 style={styles.input}
                 placeholder="Cavid Əliyev / John Doe"
@@ -103,10 +103,10 @@ export default function RegisterScreen() {
 
             {/* Email */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>E-poçt / Email</Text>
+              <Text style={styles.label}>Email</Text>
               <TextInput 
                 style={styles.input}
-                placeholder="nümunə@fitflow.com / example@fitflow.com"
+                placeholder="example@fitflow.com"
                 placeholderTextColor={colors.textMuted}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -115,7 +115,7 @@ export default function RegisterScreen() {
 
             {/* Password */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Şifrə / Password</Text>
+              <Text style={styles.label}>Password</Text>
               <View style={styles.passwordContainer}>
                 <TextInput 
                   style={[styles.input, { flex: 1, paddingRight: 50 }]}
@@ -138,7 +138,7 @@ export default function RegisterScreen() {
 
             {/* Confirm Password */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Şifrənin təsdiqi / Confirm Password</Text>
+              <Text style={styles.label}>Confirm Password</Text>
               <View style={styles.passwordContainer}>
                 <TextInput 
                   style={[styles.input, { flex: 1, paddingRight: 50 }]}
@@ -165,7 +165,7 @@ export default function RegisterScreen() {
               activeOpacity={1} 
               disabled={true}
             >
-              <Text style={styles.registerButtonText}>Qeydiyyatdan Keç / Sign Up</Text>
+              <Text style={styles.registerButtonText}>Sign Up</Text>
             </TouchableOpacity>
 
           </View>
@@ -173,7 +173,7 @@ export default function RegisterScreen() {
           {/* Divider */}
           <View style={styles.dividerContainer}>
             <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>VƏ YA / OR</Text>
+            <Text style={styles.dividerText}>OR</Text>
             <View style={styles.dividerLine} />
           </View>
 
@@ -181,24 +181,19 @@ export default function RegisterScreen() {
           <View style={styles.socialContainer}>
             <TouchableOpacity style={styles.socialButton} onPress={onGoogleButtonPress}>
               <GoogleIcon width={24} height={24} />
-              <Text style={styles.socialButtonText}>Google ilə davam edin</Text>
+              <Text style={styles.socialButtonText}>Continue Google</Text>
             </TouchableOpacity>
           </View>
 
           {/* Footer Link */}
           <View style={styles.footer}>
             <View style={styles.footerRow}>
-              <Text style={styles.footerText}>Artıq hesabınız var? </Text>
-              <TouchableOpacity onPress={() => router.back()}>
-                <Text style={styles.loginLink}>Daxil olun</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.footerRow}>
-              <Text style={styles.footerSubText}>Already have an account? </Text>
+              <Text style={styles.footerText}>Already have an account? </Text>
               <TouchableOpacity onPress={() => router.back()}>
                 <Text style={styles.loginLink}>Log in</Text>
               </TouchableOpacity>
             </View>
+            
           </View>
 
         </ScrollView>

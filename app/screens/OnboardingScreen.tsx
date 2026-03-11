@@ -34,8 +34,7 @@ const ONBOARDING_DATA = [
   },
   {
     id: '2',
-    title: 'Limitləri Aşın',
-    titleHighlight: 'Push Your Limits',
+    title: 'Push Your Limits',
     subtitle: 'Hər məşq sizi hədəfə bir addım daha yaxınlaşdırır.',
     translation: 'Every workout brings you one step closer to your goal.',
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCqnAcIA3uJQ4T9y0242FPA5SPsG0bKOXlIrA-trYjMA_PWxtD5p15DiNSTq02ZQ-KSyJCbIGNKI4smSPeCgagkBjrBEQoaDhaIwJMIpeHQ0dwh8lSH2ntCtBp47LWbSQeuF4JBJ_hPkZOEDdS3jSlCM3M2G4SNKyFzd3QmbgIOzhZpQo3C06977bPEFW2g0fSlNhn82dHIc8rDR8RDlz7IE_VEAMpUWOZ_qfMu2bpfGTldkWTr733hmwY1sLgOH3cksevgLCEdFPI',

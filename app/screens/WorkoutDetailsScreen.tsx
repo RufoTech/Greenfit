@@ -22,7 +22,6 @@ const { width } = Dimensions.get('window');
 const workoutDetails = {
   1: {
     title: 'Full Body Blast',
-    titleAz: 'Bütöv bədən',
     level: 'Intermediate',
     duration: '45 min',
     equipment: 'Dumbbells, Bench',
@@ -38,7 +37,6 @@ const workoutDetails = {
   // Default fallback
   default: {
     title: 'Upper Body Power',
-    titleAz: 'Üst Bədən Gücü',
     level: 'Advanced',
     duration: '45 min',
     equipment: 'Dumbbells, Bench',

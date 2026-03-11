@@ -20,11 +20,9 @@ const workoutLibrary = [
   {
     id: 1,
     title: 'Full Body Blast',
-    titleAz: 'Bütöv bədən',
     duration: '45 mins',
     exercises: 8,
     level: 'Intermediate',
-    levelAz: 'Orta',
     levelColor: '#ccff00',
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAe6izQ0Ztc_1FLxlMoHUaRoQR1UdvESJUKseVdIr9DTsqykilnUMonbrk7omWWCsMzwIfMruY36WgTLGfhYSnAtjD49XZ4C7vbAX5AB4rTnPqujhn0h4oVD04Y3FAtMCyeNtJZF7QKynQ_sWaNcAhv64eXC2l01EFHaGb7f0Zt-XWRNm_7F51PRTPfZPQ9sRTyuQQixb8TXvblUhdr5kbU4EOUk60LR_APO3dPlcq1Aeyub2-VYovHA38MZNcr0a1qFJwuNHPbH1A',
     category: 'Full Body'
@@ -32,11 +30,9 @@ const workoutLibrary = [
   {
     id: 2,
     title: 'Upper Body Power',
-    titleAz: 'Üst bədən',
     duration: '30 mins',
     exercises: 6,
     level: 'Advanced',
-    levelAz: 'Qabaqcıl',
     levelColor: '#ef4444',
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBvuWL4scLhi2ya4Mys5iI2sg3yec8eR7q8F9JV31WObbUDK0BaMhahCRIKQUYXvQKMHN2YJ4wSEoeiNYgnaVBnyNJ8iVQHE2HF52Nmnz-b_Km5g7MSQaS9S8rtPh6dD_KCX64L-99jIx1xFxKGXQkd55Xs3tGnRxvY-9CoQ8HFxkf5VKSWQeKpAnB7am0bhcCBGDMsYtytutYsaNe3ymS4Ins4O1Z9pGeyu_ezlTocOv2wt1qovjRIVy2GMuaNAW21MfwGWQGYoSA',
     category: 'Push'
@@ -44,11 +40,9 @@ const workoutLibrary = [
   {
     id: 3,
     title: 'Leg Day Routine',
-    titleAz: 'Ayaq günü',
     duration: '50 mins',
     exercises: 10,
     level: 'Beginner',
-    levelAz: 'Başlanğıc',
     levelColor: '#3b82f6',
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDVe-Dx4h62LavfWndD3uoE7528OUYuDTV9HCdh9Lz-Q10PayTRcoAVjENF1-PC3OZzbZxZ0Jybh96eELL58tnzwIBRB2t7wYBTA1nMPnQwV12baW2t4YX-qJFr84kPEQOBdvw6Cnd6q8KSMpTvqrBRsPmhoJbtkti0IrbPsdPZYuq28o6kBVxBfItokvNoJ4bmTsG7SHCZc4ptEe9fiGs3oeOctkRlGPt1WbIxd3Wks-HeU-pWQvXvRiMFoq-RTOLF4mAoQRWSsdc',
     category: 'Legs'
@@ -56,11 +50,9 @@ const workoutLibrary = [
   {
     id: 4,
     title: 'HIIT Cardio Burn',
-    titleAz: 'HIIT Kardio',
     duration: '20 mins',
     exercises: 5,
     level: 'Intermediate',
-    levelAz: 'Orta',
     levelColor: '#ccff00',
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCMDYheDvL91bi4IVByVIQynjLDa0lKR89kfRBzSq584Smwj7xZO5kFNCOima32IHOuPYQcd8TWrVYGATw3XVkH4-fCZUUmHnCLyhWranMcW4vzSQpjkk2gvLv73f8aSKZsAE0BbXt9wgygHUvCBu01RurEh3jl5wD9fsbguDNZhjEtLTMIp9WVfWF8YobUzMXrmH5Cy8nBC6_g60tC6vPdMuD1HbWxyuc1LS32E-yqW8zjpkW7jRO17K6Fv1PfoXQUTcPpKCjCHQg',
     category: 'HIIT'
@@ -68,11 +60,11 @@ const workoutLibrary = [
 ];
 
 const categories = [
-  { id: 'all', label: 'All / Hamısı' },
-  { id: 'full', label: 'Full Body / Bütün bədən' },
-  { id: 'push', label: 'Push / Təkan' },
-  { id: 'pull', label: 'Pull / Dartma' },
-  { id: 'legs', label: 'Legs / Ayaqlar' },
+  { id: 'all', label: 'All' },
+  { id: 'full', label: 'Full Body' },
+  { id: 'push', label: 'Push' },
+  { id: 'pull', label: 'Pull' },
+  { id: 'legs', label: 'Legs' },
   { id: 'hiit', label: 'HIIT' },
 ];
 
@@ -99,7 +91,7 @@ export default function AddWorkoutScreen() {
         >
           <MaterialIcons name="arrow-back" size={24} color="#1f230f" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add Workout / Məşq əlavə et</Text>
+        <Text style={styles.headerTitle}>Add Workout</Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.doneButton}>Done</Text>
         </TouchableOpacity>
@@ -111,7 +103,7 @@ export default function AddWorkoutScreen() {
           <MaterialIcons name="search" size={24} color="#94a3b8" />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search workouts... / Məşq axtar..."
+            placeholder="Search workouts..."
             placeholderTextColor="#94a3b8"
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -190,13 +182,13 @@ export default function AddWorkoutScreen() {
                 style={styles.cardOverlay}
               />
               <View style={[styles.levelBadge, { backgroundColor: workout.levelColor }]}>
-                <Text style={styles.levelText}>{workout.level} / {workout.levelAz}</Text>
+                <Text style={styles.levelText}>{workout.level}</Text>
               </View>
             </ImageBackground>
             
             <View style={styles.cardFooter}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.cardTitle}>{workout.title} / {workout.titleAz}</Text>
+                <Text style={styles.cardTitle}>{workout.title}</Text>
                 <Text style={styles.cardSubtitle}>{workout.duration} • {workout.exercises} exercises</Text>
               </View>
               <TouchableOpacity 

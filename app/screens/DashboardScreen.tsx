@@ -1,4 +1,4 @@
-import { Feather, MaterialIcons } from '@expo/vector-icons';
+import { Feather, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import auth from '@react-native-firebase/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -37,7 +37,7 @@ const theme = {
     bg: '#1f230f',
     text: '#f1f5f9', // slate-100
     subtext: '#94a3b8', // slate-400
-    cardBg: 'rgba(204, 255, 0, 0.05)',
+    cardBg: 'transparent',
     cardBorder: 'rgba(204, 255, 0, 0.2)',
     primary: '#ccff00',
     navBg: 'rgba(31, 35, 15, 0.95)',
@@ -132,6 +132,18 @@ export default function DashboardScreen() {
 
           <View style={[styles.summaryCard, { backgroundColor: isDark ? currentTheme.cardBg : '#ffffff', borderColor: isDark ? currentTheme.cardBorder : '#e2e8f0' }]}>
             <View style={styles.summaryHeader}>
+              <MaterialCommunityIcons name="shoe-print" size={20} color={isDark ? '#22c55e' : '#15803d'} />
+              <Text style={[styles.summaryTitle, { color: currentTheme.subtext }]}>Daily Steps</Text>
+            </View>
+            <Text style={[styles.summaryValue, { color: currentTheme.text }]}>8,432</Text>
+            <View style={styles.trendContainer}>
+              <MaterialIcons name="trending-up" size={16} color="#22c55e" />
+              <Text style={[styles.trendText, { color: '#22c55e' }]}>+15%</Text>
+            </View>
+          </View>
+
+          <View style={[styles.summaryCard, { backgroundColor: isDark ? currentTheme.cardBg : '#ffffff', borderColor: isDark ? currentTheme.cardBorder : '#e2e8f0' }]}>
+            <View style={styles.summaryHeader}>
               <MaterialIcons name="fitness-center" size={20} color={currentTheme.subtext} />
               <Text style={[styles.summaryTitle, { color: currentTheme.subtext }]}>Calories Burned</Text>
             </View>
@@ -147,32 +159,54 @@ export default function DashboardScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: currentTheme.subtext }]}>QUICK ACTIONS</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionsContainer}>
-            <TouchableOpacity style={styles.actionButton}>
-              <View style={[styles.actionIconContainer, { backgroundColor: '#ccff00' }]}>
-                <MaterialIcons name="bolt" size={24} color="#0f172a" />
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => router.push('/screens/AddStepsScreen')}
+            >
+              <View style={[styles.actionIconContainer, { backgroundColor: isDark ? '#1e293b' : '#e2e8f0' }]}>
+                <MaterialCommunityIcons name="shoe-print" size={24} color={currentTheme.text} />
               </View>
-              <Text style={[styles.actionText, { color: currentTheme.text }]}>Quick HIIT</Text>
+              <Text style={[styles.actionText, { color: currentTheme.text }]}>Add Steps</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => router.push('/screens/LogWaterScreen')}
+            >
+              <View style={[styles.actionIconContainer, { backgroundColor: isDark ? '#1e293b' : '#e2e8f0' }]}>
+                <MaterialIcons name="water-drop" size={24} color={currentTheme.text} />
+              </View>
+              <Text style={[styles.actionText, { color: currentTheme.text }]}>Log Water</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => router.push('/screens/SleepAlarmScreen')}
+            >
+              <View style={[styles.actionIconContainer, { backgroundColor: isDark ? '#1e293b' : '#e2e8f0' }]}>
+                <Feather name="moon" size={24} color={currentTheme.text} />
+              </View>
+              <Text style={[styles.actionText, { color: currentTheme.text }]}>Sleep Alarm</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => router.push('/screens/AddMealScreen')}
+            >
               <View style={[styles.actionIconContainer, { backgroundColor: isDark ? '#1e293b' : '#e2e8f0' }]}>
                 <MaterialIcons name="restaurant" size={24} color={currentTheme.text} />
               </View>
               <Text style={[styles.actionText, { color: currentTheme.text }]}>Add Meal</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => router.push('/screens/LogWeightScreen')}
+            >
               <View style={[styles.actionIconContainer, { backgroundColor: isDark ? '#1e293b' : '#e2e8f0' }]}>
-                <MaterialIcons name="qr-code-scanner" size={24} color={currentTheme.text} />
+                <MaterialIcons name="monitor-weight" size={24} color={currentTheme.text} />
               </View>
-              <Text style={[styles.actionText, { color: currentTheme.text }]}>Scan</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.actionButton}>
-              <View style={[styles.actionIconContainer, { backgroundColor: isDark ? '#1e293b' : '#e2e8f0' }]}>
-                <MaterialIcons name="water-drop" size={24} color={currentTheme.text} />
-              </View>
-              <Text style={[styles.actionText, { color: currentTheme.text }]}>Hydrate</Text>
+              <Text style={[styles.actionText, { color: currentTheme.text }]}>Log Weight</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -345,14 +379,6 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 20,
     borderWidth: 1,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 1.00,
-    elevation: 1,
   },
   summaryHeader: {
     flexDirection: 'row',
