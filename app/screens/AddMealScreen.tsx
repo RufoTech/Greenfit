@@ -31,16 +31,28 @@ interface MealItemProps {
 const MealItem = ({ icon, name, detail, onAdd }: MealItemProps) => {
   const [added, setAdded] = useState(false);
 
+  const router = useRouter();
+
+  const handleMealPress = (item: any) => {
+    router.push({
+      pathname: "/screens/MealDetailsScreen",
+      params: { name: item.name, detail: item.detail, icon: item.icon }
+    });
+  };
+
   const handleAdd = () => {
     setAdded(true);
-    onAdd?.({ name, detail });
+    onAdd?.({ name, detail, icon });
     // Visual feedback duration
     setTimeout(() => setAdded(false), 1000);
   };
 
   return (
     <View style={styles.mealItem}>
-      <View style={styles.mealLeft}>
+      <TouchableOpacity 
+        style={styles.mealLeft}
+        onPress={() => handleMealPress({ name, detail, icon })}
+      >
         <View style={styles.mealIconContainer}>
           <MaterialIcons name={icon as any} size={24} color={PRIMARY} />
         </View>
@@ -48,7 +60,7 @@ const MealItem = ({ icon, name, detail, onAdd }: MealItemProps) => {
           <Text style={styles.mealName}>{name}</Text>
           <Text style={styles.mealDetail}>{detail}</Text>
         </View>
-      </View>
+      </TouchableOpacity>
       <TouchableOpacity
         onPress={handleAdd}
         style={[
@@ -171,7 +183,11 @@ export default function AddMealScreen() {
 
       {/* Fixed Footer Action */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.customMealButton} activeOpacity={0.9}>
+        <TouchableOpacity 
+            style={styles.customMealButton} 
+            activeOpacity={0.9}
+            onPress={() => router.push('/screens/AddCustomMealScreen')}
+        >
             <MaterialIcons name="add-circle" size={24} color="#1f230f" />
             <Text style={styles.customMealText}>Add Custom Meal</Text>
         </TouchableOpacity>

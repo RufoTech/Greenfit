@@ -115,7 +115,7 @@ const CustomTabBar = ({ state, descriptors, navigation, onAddPress, isQuickActio
               color={isFocused ? '#ccff00' : '#94a3b8'}
             />
             <Text style={[styles.navText, isFocused && styles.activeText]}>
-              {typeof label === 'string' ? label : route.name}
+              {label as string}
             </Text>
           </TouchableOpacity>
         );

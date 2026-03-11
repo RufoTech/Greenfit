@@ -92,7 +92,7 @@ export default function AddStepsScreen() {
         >
           <MaterialIcons name="arrow-back" size={24} color="#f1f5f9" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add Steps | Addım Sayar</Text>
+        <Text style={styles.headerTitle}>Add Steps </Text>
         <TouchableOpacity style={styles.iconButton}>
           <MaterialIcons name="settings" size={24} color="#f1f5f9" />
         </TouchableOpacity>

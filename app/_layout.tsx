@@ -76,6 +76,11 @@ export default function RootLayout() {
         <Stack.Screen name="screens/LogWaterScreen" />
         <Stack.Screen name="screens/SleepAlarmScreen" />
         <Stack.Screen name="screens/AddMealScreen" />
+        <Stack.Screen name="screens/AddCustomMealScreen" />
+        <Stack.Screen name="screens/LogWeightScreen" />
+        <Stack.Screen name="screens/BodyFatCalculatorScreen" />
+        <Stack.Screen name="screens/MeasurementGuideScreen" />
+        <Stack.Screen name="screens/MealDetailsScreen" />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />

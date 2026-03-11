@@ -108,47 +108,47 @@ export default function QuickActionsOverlay({ visible, onClose }: QuickActionsOv
       >
         <View style={styles.header}>
           <Text style={styles.title}>Quick Actions</Text>
-          <Text style={styles.subtitle}>Yeni Əlavə Et</Text>
         </View>
 
         <View style={styles.grid}>
           <QuickActionButton 
               title="Add Steps" 
-              subtitle="Addım Sayar" 
+              subtitle="" 
               IconComponent={MaterialCommunityIcons} 
               iconName="shoe-print" 
               onPress={() => handleActionPress('/screens/AddStepsScreen')}
           />
           <QuickActionButton 
               title="Log Water" 
-              subtitle="Su İçmək" 
+              subtitle="" 
               IconComponent={MaterialIcons} 
               iconName="water-drop" 
               onPress={() => handleActionPress('/screens/LogWaterScreen')}
           />
           <QuickActionButton 
               title="Sleep Alarm" 
-              subtitle="Yuxu Alarmı" 
+              subtitle="" 
               IconComponent={Feather} 
               iconName="moon" 
               onPress={() => handleActionPress('/screens/SleepAlarmScreen')}
           />
           <QuickActionButton 
               title="Add Meal" 
-              subtitle="Qida Proqramı" 
+              subtitle="" 
               IconComponent={MaterialIcons} 
               iconName="restaurant" 
               onPress={() => handleActionPress('/screens/AddMealScreen')}
           />
           <QuickActionButton 
               title="Log Weight" 
-              subtitle="Çəki Qeyd Et" 
+              subtitle="" 
               IconComponent={MaterialIcons} 
               iconName="monitor-weight" 
+              onPress={() => handleActionPress('/screens/LogWeightScreen')}
           />
           <QuickActionButton 
               title="Start Activity" 
-              subtitle="Fəaliyyətə Başla" 
+              subtitle="" 
               IconComponent={Feather} 
               iconName="activity" 
           />
