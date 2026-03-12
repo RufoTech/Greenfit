@@ -21,8 +21,15 @@ const AddCustomMealScreen = () => {
     protein: "",
     carbs: "",
     fats: "",
+    fiber: "",
+    sugar: "",
+    sodium: "",
+    cholesterol: "",
+    potassium: "",
     servingSize: "",
+    unit: "",
   });
+  const [warning, setWarning] = useState<string | null>(null);
 
   const pickImage = async () => {
     // Request permission
@@ -42,6 +49,24 @@ const AddCustomMealScreen = () => {
     if (!result.canceled) {
       setImagePreview(result.assets[0].uri);
     }
+  };
+
+  const handleServingChange = (text: string) => {
+    if (form.unit) {
+      setWarning("Please clear Unit before entering Serving Size");
+      setTimeout(() => setWarning(null), 3000);
+      return;
+    }
+    setForm(f => ({ ...f, servingSize: text }));
+  };
+
+  const handleUnitChange = (text: string) => {
+    if (form.servingSize) {
+      setWarning("Please clear Serving Size before entering Unit");
+      setTimeout(() => setWarning(null), 3000);
+      return;
+    }
+    setForm(f => ({ ...f, unit: text }));
   };
 
   const handleField = (field: string) => (text: string) => {
@@ -135,19 +160,82 @@ const AddCustomMealScreen = () => {
                     onChangeText={handleField("fats")} 
                     color={TEXT_COLOR} 
                 />
+                <NutritionInput 
+                    label="Fiber (g)" 
+                    value={form.fiber} 
+                    onChangeText={handleField("fiber")} 
+                    color={TEXT_COLOR} 
+                />
+                <NutritionInput 
+                    label="Sugar (g)" 
+                    value={form.sugar} 
+                    onChangeText={handleField("sugar")} 
+                    color={TEXT_COLOR} 
+                />
+                <NutritionInput 
+                    label="Sodium (mg)" 
+                    value={form.sodium} 
+                    onChangeText={handleField("sodium")} 
+                    color={TEXT_COLOR} 
+                />
+                <NutritionInput 
+                    label="Cholesterol (mg)" 
+                    value={form.cholesterol} 
+                    onChangeText={handleField("cholesterol")} 
+                    color={TEXT_COLOR} 
+                />
+                <NutritionInput 
+                    label="Potassium (mg)" 
+                    value={form.potassium} 
+                    onChangeText={handleField("potassium")} 
+                    color={TEXT_COLOR} 
+                />
             </View>
         </View>
 
-        {/* Serving Size Section */}
+        {/* Serving Size / Unit Section */}
         <View style={styles.section} data-purpose="serving-size">
-            <Text style={styles.sectionLabel}>SERVING SIZE</Text>
-            <TextInput 
-                style={styles.input}
-                placeholder="e.g. 250g or 1 cup"
-                placeholderTextColor="#525252"
-                value={form.servingSize}
-                onChangeText={handleField("servingSize")}
-            />
+            <View style={styles.servingHeaderRow}>
+                <Text style={[styles.sectionLabel, { flex: 1 }]}>SERVING SIZE</Text>
+                <Text style={[styles.sectionLabel, { flex: 1 }]}>UNIT (COUNT)</Text>
+            </View>
+            
+            <View style={styles.servingRow}>
+                <TextInput 
+                    style={[
+                        styles.input, 
+                        styles.halfInput,
+                        form.unit ? styles.inputDisabled : null
+                    ]}
+                    placeholder="e.g. 100g"
+                    placeholderTextColor="#525252"
+                    value={form.servingSize}
+                    onChangeText={handleServingChange}
+                />
+                
+                <View style={styles.orDivider}>
+                    <Text style={styles.orText}>OR</Text>
+                </View>
+
+                <TextInput 
+                    style={[
+                        styles.input, 
+                        styles.halfInput,
+                        form.servingSize ? styles.inputDisabled : null
+                    ]}
+                    placeholder="e.g. 1 slice"
+                    placeholderTextColor="#525252"
+                    value={form.unit}
+                    onChangeText={handleUnitChange}
+                />
+            </View>
+
+            {warning && (
+                <View style={styles.warningContainer}>
+                    <MaterialIcons name="info-outline" size={20} color="#FF4500" />
+                    <Text style={styles.warningText}>{warning}</Text>
+                </View>
+            )}
         </View>
 
         {/* Category Selector Section */}
@@ -389,6 +477,49 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: 18,
     fontWeight: '800',
+  },
+  servingHeaderRow: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 8,
+  },
+  servingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  halfInput: {
+    flex: 1,
+    width: undefined,
+  },
+  inputDisabled: {
+    opacity: 0.5,
+    backgroundColor: '#1A1A1A',
+  },
+  orDivider: {
+    paddingHorizontal: 4,
+  },
+  orText: {
+    color: '#6b7280',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  warningContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255, 69, 0, 0.1)',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 69, 0, 0.3)',
+  },
+  warningText: {
+    color: '#FF4500',
+    fontSize: 13,
+    fontWeight: '500',
+    flex: 1,
   },
 });
 
