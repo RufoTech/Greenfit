@@ -5,6 +5,7 @@ import 'react-native-reanimated';
 import { useEffect, useState } from 'react';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
+import * as NavigationBar from 'expo-navigation-bar';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -48,6 +49,9 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded && !initializing) {
       SplashScreen.hideAsync();
+      // Hide navigation bar
+      NavigationBar.setVisibilityAsync("hidden");
+      NavigationBar.setBehaviorAsync("overlay-swipe");
     }
   }, [loaded, initializing]);
 
