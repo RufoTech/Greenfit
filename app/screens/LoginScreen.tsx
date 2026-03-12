@@ -154,9 +154,16 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.socialButton}>
-            <FontAwesome name="apple" size={24} color={colors.textMain} />
-            <Text style={styles.socialButtonText}>Continue Apple</Text>
+            <FontAwesome name="facebook" size={24} color="#1877F2" />
+            <Text style={styles.socialButtonText}>Continue Facebook</Text>
           </TouchableOpacity>
+
+          {Platform.OS === 'ios' && (
+            <TouchableOpacity style={styles.socialButton}>
+              <FontAwesome name="apple" size={24} color={colors.textMain} />
+              <Text style={styles.socialButtonText}>Continue Apple</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Footer Link */}
