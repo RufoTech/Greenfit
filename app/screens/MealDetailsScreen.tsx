@@ -4,6 +4,7 @@ import { MaterialIcons, FontAwesome6 } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Svg, { Circle } from 'react-native-svg';
 import Slider from '@react-native-community/slider';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const PRIMARY = "#ccff00";
 const BG_DARK = "#1f230f";
@@ -12,14 +13,49 @@ const TEXT_MUTED = "#94a3b8";
 
 const MealDetailsScreen = () => {
   const router = useRouter();
-  const { name, calories } = useLocalSearchParams();
-  const [servingSize, setServingSize] = useState(150);
+  const { 
+    name, 
+    calories, 
+    imageUrl, 
+    detailsImage,
+    protein,
+    carbs,
+    fat,
+    servingSize: initialServingSize,
+    potassium,
+    sodium,
+    sugar,
+    fiber,
+    cholesterol
+  } = useLocalSearchParams();
+  
+  // Use passed serving size or default to 100g if not provided
+  const servingSize = initialServingSize ? Number(initialServingSize) : 100;
 
   // Mock data - normally would come from API/params
-  const mealName = name || "Grilled Chicken Breast";
-  const baseCalories = 165; // per 100g
+  const mealName = name || "Unknown Food";
   
-  const currentCalories = Math.round((baseCalories * servingSize) / 100);
+  // Parse nutritional values (default to 0 if missing)
+  const proteinVal = protein ? Number(protein) : 0;
+  const carbsVal = carbs ? Number(carbs) : 0;
+  const fatVal = fat ? Number(fat) : 0;
+  const caloriesVal = calories ? Number(calories) : 0;
+
+  // Calculate percentages for charts (simple approximation based on weight)
+  // Note: This is a visual approximation. Real macro percentages should be based on caloric contribution (P*4, C*4, F*9)
+  const totalMacros = proteinVal + carbsVal + fatVal;
+  const proteinPct = totalMacros > 0 ? (proteinVal / totalMacros) * 100 : 0;
+  const carbsPct = totalMacros > 0 ? (carbsVal / totalMacros) * 100 : 0;
+  const fatPct = totalMacros > 0 ? (fatVal / totalMacros) * 100 : 0;
+
+  // Calculate stroke dash offsets for charts (circumference is ~150.7)
+  const circumference = 2 * Math.PI * 24;
+  const proteinOffset = circumference - (circumference * proteinPct) / 100;
+  const carbsOffset = circumference - (circumference * carbsPct) / 100;
+  const fatOffset = circumference - (circumference * fatPct) / 100;
+  
+  const displayImage = detailsImage || imageUrl;
+  const finalImage = displayImage ? (Array.isArray(displayImage) ? displayImage[0] : displayImage) : 'https://via.placeholder.com/400';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -44,19 +80,22 @@ const MealDetailsScreen = () => {
         {/* Hero Image */}
         <View style={styles.heroImageContainer}>
              <ImageBackground
-                source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCrm9eztoAugTme14LBjfsKJ6kZAvlfgJHcpdlzAdXdyIc2UVexcp7rArO4DU27ZnfIF-k-Tcm3wXcO__ByqzqvfEA5lhb8lNwUZF1-FKM1R5EvHyUNIlY-bO1aCkKyycdGcIUHCMEtB6QSxvxVViot_vL3qijV4oP667rMGDRyCihn2o2gm8N1MScaUp_HY3ij3KWyFYySxSjEeuEwDMAbZaepYN6uPHSSdC0PlqbhYbq3dfHOqlLOZzvQixLtCioi601tRIyYpjo' }}
+                source={{ uri: finalImage }}
                 style={styles.heroImage}
-                imageStyle={{ borderRadius: 24 }}
-            />
-        </View>
-
-        {/* Title & Calories */}
-        <View style={styles.titleSection}>
-            <Text style={styles.mealTitle}>{mealName}</Text>
-            <View style={styles.calorieTag}>
-                <MaterialIcons name="local-fire-department" size={16} color={PRIMARY} />
-                <Text style={styles.calorieText}>{baseCalories} kcal / 100g</Text>
-            </View>
+                resizeMode="cover"
+             >
+                <LinearGradient
+                    colors={['transparent', 'rgba(31,35,15,0.9)']}
+                    style={styles.imageOverlay}
+                />
+                <View style={styles.titleContainer}>
+                    <Text style={styles.mealTitle}>{mealName}</Text>
+                    <View style={styles.calorieTag}>
+                        <MaterialIcons name="local-fire-department" size={20} color={PRIMARY} />
+                        <Text style={styles.calorieText}>{caloriesVal} KCAL</Text>
+                    </View>
+                </View>
+             </ImageBackground>
         </View>
 
         {/* Nutrition Overview */}
@@ -68,11 +107,11 @@ const MealDetailsScreen = () => {
                     <View style={styles.chartContainer}>
                         <Svg height="56" width="56" viewBox="0 0 56 56">
                             <Circle cx="28" cy="28" r="24" stroke="rgba(255,255,255,0.1)" strokeWidth="4" fill="transparent" />
-                            <Circle cx="28" cy="28" r="24" stroke={PRIMARY} strokeWidth="4" fill="transparent" strokeDasharray="150.7" strokeDashoffset="30.1" strokeLinecap="round" rotation="-90" origin="28, 28" />
+                            <Circle cx="28" cy="28" r="24" stroke={PRIMARY} strokeWidth="4" fill="transparent" strokeDasharray={circumference} strokeDashoffset={proteinOffset} strokeLinecap="round" rotation="-90" origin="28, 28" />
                         </Svg>
-                        <Text style={styles.chartLabel}>80%</Text>
+                        <Text style={styles.chartLabel}>{Math.round(proteinPct)}%</Text>
                     </View>
-                    <Text style={styles.macroValue}>31g</Text>
+                    <Text style={styles.macroValue}>{proteinVal}g</Text>
                     <Text style={styles.macroLabel}>PROTEIN</Text>
                 </View>
 
@@ -81,11 +120,11 @@ const MealDetailsScreen = () => {
                     <View style={styles.chartContainer}>
                         <Svg height="56" width="56" viewBox="0 0 56 56">
                             <Circle cx="28" cy="28" r="24" stroke="rgba(255,255,255,0.1)" strokeWidth="4" fill="transparent" />
-                            <Circle cx="28" cy="28" r="24" stroke="rgba(204, 255, 0, 0.4)" strokeWidth="4" fill="transparent" strokeDasharray="150.7" strokeDashoffset="145" strokeLinecap="round" rotation="-90" origin="28, 28" />
+                            <Circle cx="28" cy="28" r="24" stroke="rgba(204, 255, 0, 0.4)" strokeWidth="4" fill="transparent" strokeDasharray={circumference} strokeDashoffset={carbsOffset} strokeLinecap="round" rotation="-90" origin="28, 28" />
                         </Svg>
-                        <Text style={styles.chartLabel}>2%</Text>
+                        <Text style={styles.chartLabel}>{Math.round(carbsPct)}%</Text>
                     </View>
-                    <Text style={styles.macroValue}>0g</Text>
+                    <Text style={styles.macroValue}>{carbsVal}g</Text>
                     <Text style={styles.macroLabel}>CARBS</Text>
                 </View>
 
@@ -94,48 +133,26 @@ const MealDetailsScreen = () => {
                     <View style={styles.chartContainer}>
                         <Svg height="56" width="56" viewBox="0 0 56 56">
                             <Circle cx="28" cy="28" r="24" stroke="rgba(255,255,255,0.1)" strokeWidth="4" fill="transparent" />
-                            <Circle cx="28" cy="28" r="24" stroke="rgba(204, 255, 0, 0.6)" strokeWidth="4" fill="transparent" strokeDasharray="150.7" strokeDashoffset="120" strokeLinecap="round" rotation="-90" origin="28, 28" />
+                            <Circle cx="28" cy="28" r="24" stroke="rgba(204, 255, 0, 0.6)" strokeWidth="4" fill="transparent" strokeDasharray={circumference} strokeDashoffset={fatOffset} strokeLinecap="round" rotation="-90" origin="28, 28" />
                         </Svg>
-                        <Text style={styles.chartLabel}>18%</Text>
+                        <Text style={styles.chartLabel}>{Math.round(fatPct)}%</Text>
                     </View>
-                    <Text style={styles.macroValue}>3.6g</Text>
+                    <Text style={styles.macroValue}>{fatVal}g</Text>
                     <Text style={styles.macroLabel}>FATS</Text>
                 </View>
             </View>
         </View>
 
-        {/* Serving Size Selector */}
+        {/* Serving Size Display (Static) */}
         <View style={styles.servingSection}>
             <View style={styles.servingHeader}>
                 <View>
                     <Text style={styles.sectionTitle}>Serving Size</Text>
-                    <Text style={styles.sectionSubtitle}>Adjust your portion</Text>
                 </View>
                 <View style={styles.servingValueBox}>
                     <Text style={styles.servingValueText}>{servingSize}</Text>
                     <Text style={styles.servingUnitText}>g</Text>
                 </View>
-            </View>
-
-            <Slider
-                style={{width: '100%', height: 40}}
-                minimumValue={10}
-                maximumValue={500}
-                step={10}
-                value={servingSize}
-                onValueChange={setServingSize}
-                minimumTrackTintColor={PRIMARY}
-                maximumTrackTintColor="rgba(255,255,255,0.2)"
-                thumbTintColor={PRIMARY}
-            />
-            
-            <View style={styles.sliderLabels}>
-                <Text style={styles.sliderLabel}>10g</Text>
-                <Text style={styles.sliderLabel}>100g</Text>
-                <Text style={styles.sliderLabel}>200g</Text>
-                <Text style={styles.sliderLabel}>300g</Text>
-                <Text style={styles.sliderLabel}>400g</Text>
-                <Text style={styles.sliderLabel}>500g</Text>
             </View>
         </View>
 
@@ -145,26 +162,27 @@ const MealDetailsScreen = () => {
             <View style={styles.detailList}>
                 <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Fiber</Text>
-                    <Text style={styles.detailValue}>0g</Text>
+                    <Text style={styles.detailValue}>{fiber || 0}g</Text>
                 </View>
                 <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Sugar</Text>
-                    <Text style={styles.detailValue}>0g</Text>
+                    <Text style={styles.detailValue}>{sugar || 0}g</Text>
                 </View>
                 <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Sodium</Text>
-                    <Text style={styles.detailValue}>74mg</Text>
+                    <Text style={styles.detailValue}>{sodium || 0}mg</Text>
                 </View>
                 <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Cholesterol</Text>
-                    <Text style={styles.detailValue}>85mg</Text>
+                    <Text style={styles.detailValue}>{cholesterol || 0}mg</Text>
                 </View>
                 <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
                     <Text style={styles.detailLabel}>Potassium</Text>
-                    <Text style={styles.detailValue}>256mg</Text>
+                    <Text style={styles.detailValue}>{potassium || 0}mg</Text>
                 </View>
             </View>
         </View>
+
 
         {/* Bottom Spacer */}
         <View style={{ height: 100 }} />
@@ -231,8 +249,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  titleSection: {
-    marginBottom: 32,
+  imageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+    padding: 24,
+  },
+  titleContainer: {
+    gap: 8,
   },
   mealTitle: {
     fontSize: 30,
@@ -249,7 +272,7 @@ const styles = StyleSheet.create({
   calorieText: {
     fontSize: 12,
     fontWeight: '600',
-    color: TEXT_MUTED,
+    color: '#e2e8f0',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },

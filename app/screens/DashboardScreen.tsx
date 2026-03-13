@@ -120,13 +120,13 @@ export default function DashboardScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.summaryContainer}>
           <View style={[styles.summaryCard, { backgroundColor: isDark ? currentTheme.cardBg : '#ffffff', borderColor: isDark ? currentTheme.cardBorder : '#e2e8f0' }]}>
             <View style={styles.summaryHeader}>
-              <MaterialIcons name="local-fire-department" size={20} color={isDark ? '#f97316' : '#f97316'} />
-              <Text style={[styles.summaryTitle, { color: currentTheme.subtext }]}>Weekly Streaks</Text>
+              <MaterialIcons name="water-drop" size={20} color="#3b82f6" />
+              <Text style={[styles.summaryTitle, { color: currentTheme.subtext }]}>Water Intake</Text>
             </View>
-            <Text style={[styles.summaryValue, { color: currentTheme.text }]}>3 Days</Text>
+            <Text style={[styles.summaryValue, { color: currentTheme.text }]}>1.2 L</Text>
             <View style={styles.trendContainer}>
-              <MaterialIcons name="trending-up" size={16} color="#22c55e" />
-              <Text style={[styles.trendText, { color: '#22c55e' }]}>+10%</Text>
+              <MaterialIcons name="trending-up" size={16} color="#3b82f6" />
+              <Text style={[styles.trendText, { color: '#3b82f6' }]}>+0.2 L</Text>
             </View>
           </View>
 

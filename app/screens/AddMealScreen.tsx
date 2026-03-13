@@ -1,34 +1,22 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Platform, StatusBar, TextInput, ScrollView, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Platform, StatusBar, TextInput, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import firestore from '@react-native-firebase/firestore';
 
 const PRIMARY = "#ccff00";
 const BG_DARK = "#1f230f";
 
-// Mock data for meals
-const meals = {
-  recent: [
-    { id: 1, icon: "egg", name: "Boiled Eggs", detail: "2 units • 156 kcal" }, // egg_alt -> egg
-    { id: 2, icon: "coffee", name: "Oatmeal with Milk", detail: "250g • 320 kcal" },
-    { id: 3, icon: "restaurant", name: "Avocado Toast", detail: "1 slice • 210 kcal" }, // nutrition -> restaurant (approx)
-  ],
-  frequent: [
-    { id: 4, icon: "restaurant", name: "Grilled Chicken", detail: "150g • 245 kcal" },
-    { id: 5, icon: "eco", name: "Greek Salad", detail: "200g • 180 kcal" },
-  ],
-};
-
-const categories = ["Breakfast", "Lunch", "Dinner", "Snacks"];
-
 interface MealItemProps {
-    icon: string;
+    icon?: string;
+    imageUrl?: string;
     name: string;
     detail: string;
     onAdd?: (item: any) => void;
+    data: any; // Full food data
 }
 
-const MealItem = ({ icon, name, detail, onAdd }: MealItemProps) => {
+const MealItem = ({ icon, imageUrl, name, detail, onAdd, data }: MealItemProps) => {
   const [added, setAdded] = useState(false);
 
   const router = useRouter();
@@ -36,31 +24,54 @@ const MealItem = ({ icon, name, detail, onAdd }: MealItemProps) => {
   const handleMealPress = (item: any) => {
     router.push({
       pathname: "/screens/MealDetailsScreen",
-      params: { name: item.name, detail: item.detail, icon: item.icon }
+      params: { 
+        name: item.name, 
+        detail: item.detail, 
+        icon: item.icon, 
+        imageUrl: item.imageUrl,
+        // Pass nutritional data
+        calories: data.calories,
+        protein: data.protein,
+        carbs: data.carbs,
+        fat: data.fat,
+        servingSize: data.servingSize,
+        potassium: data.potassium,
+        sodium: data.sodium,
+        sugar: data.sugar,
+        fiber: data.fiber,
+        cholesterol: data.cholesterol,
+        detailsImage: data.detailsImage
+      }
     });
   };
 
   const handleAdd = () => {
     setAdded(true);
-    onAdd?.({ name, detail, icon });
+    onAdd?.({ name, detail, icon, imageUrl, ...data });
     // Visual feedback duration
     setTimeout(() => setAdded(false), 1000);
   };
 
+
   return (
-    <View style={styles.mealItem}>
-      <TouchableOpacity 
-        style={styles.mealLeft}
-        onPress={() => handleMealPress({ name, detail, icon })}
-      >
+    <TouchableOpacity 
+        style={styles.mealItem}
+        onPress={() => handleMealPress({ name, detail, icon, imageUrl })}
+        activeOpacity={0.7}
+    >
+      <View style={styles.mealLeft}>
         <View style={styles.mealIconContainer}>
-          <MaterialIcons name={icon as any} size={24} color={PRIMARY} />
+          {imageUrl ? (
+             <Image source={{ uri: imageUrl }} style={styles.mealImage} resizeMode="cover" />
+          ) : (
+             <MaterialIcons name={icon as any || "restaurant"} size={24} color={PRIMARY} />
+          )}
         </View>
         <View>
           <Text style={styles.mealName}>{name}</Text>
           <Text style={styles.mealDetail}>{detail}</Text>
         </View>
-      </TouchableOpacity>
+      </View>
       <TouchableOpacity
         onPress={handleAdd}
         style={[
@@ -71,22 +82,67 @@ const MealItem = ({ icon, name, detail, onAdd }: MealItemProps) => {
       >
         <MaterialIcons name={added ? "check" : "add"} size={24} color="#1f230f" />
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 };
 
 export default function AddMealScreen() {
-  const [activeCategory, setActiveCategory] = useState("Breakfast");
+  const [activeCategory, setActiveCategory] = useState("");
+  const [categories, setCategories] = useState<string[]>([]);
+  const [foods, setFoods] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [addedItems, setAddedItems] = useState<any[]>([]);
   const router = useRouter();
 
-  const filterMeals = (list: any[]) =>
-    list.filter((m) => m.name.toLowerCase().includes(search.toLowerCase()));
+  useEffect(() => {
+    const fetchFoods = async () => {
+      try {
+        const snapshot = await firestore().collection('foods').get();
+        const foodList = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        // Extract unique categories
+        const uniqueCategories = Array.from(new Set(foodList.map((item: any) => item.category).filter(Boolean))) as string[];
+        
+        setCategories(uniqueCategories);
+        setFoods(foodList);
+        
+        if (uniqueCategories.length > 0) {
+            setActiveCategory(uniqueCategories[0]);
+        }
+      } catch (error) {
+        console.error("Error fetching foods:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchFoods();
+  }, []);
+
+  const getFilteredFoods = () => {
+    let filtered = foods;
+    
+    // Filter by category
+    if (activeCategory) {
+        filtered = filtered.filter(f => f.category === activeCategory);
+    }
+    
+    // Filter by search
+    if (search) {
+        filtered = filtered.filter(f => f.name.toLowerCase().includes(search.toLowerCase()));
+    }
+    
+    return filtered;
+  };
 
   const handleAdd = (item: any) => {
     setAddedItems((prev) => [...prev, item]);
   };
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -129,56 +185,57 @@ export default function AddMealScreen() {
         </View>
 
         {/* Category Tabs */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContainer}>
-            {categories.map((cat) => (
-                <TouchableOpacity
-                    key={cat}
-                    onPress={() => setActiveCategory(cat)}
-                    style={[
-                        styles.tabButton,
-                        activeCategory === cat ? styles.tabButtonActive : styles.tabButtonInactive
-                    ]}
-                >
-                    <Text style={[
-                        styles.tabText,
-                        activeCategory === cat ? styles.tabTextActive : styles.tabTextInactive
-                    ]}>{cat}</Text>
-                </TouchableOpacity>
-            ))}
-        </ScrollView>
+        <View style={{ height: 50 }}>
+            {loading ? (
+                <View style={{ paddingLeft: 16, justifyContent: 'center' }}>
+                    <ActivityIndicator size="small" color={PRIMARY} />
+                </View>
+            ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContainer}>
+                    {categories.map((cat) => (
+                        <TouchableOpacity
+                            key={cat}
+                            onPress={() => setActiveCategory(cat)}
+                            style={[
+                                styles.tabButton,
+                                activeCategory === cat ? styles.tabButtonActive : styles.tabButtonInactive
+                            ]}
+                        >
+                            <Text style={[
+                                styles.tabText,
+                                activeCategory === cat ? styles.tabTextActive : styles.tabTextInactive
+                            ]}>{cat}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            )}
+        </View>
       </View>
 
       {/* Content Section */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-                <MaterialIcons name="history" size={20} color={PRIMARY} />
-                <Text style={styles.sectionTitle}>Recent</Text>
-            </View>
+         {loading ? (
+             <View style={{ padding: 20, alignItems: 'center' }}>
+                 <ActivityIndicator size="large" color={PRIMARY} />
+                 <Text style={{ color: 'rgba(255,255,255,0.5)', marginTop: 10 }}>Loading foods...</Text>
+             </View>
+         ) : (
             <View style={styles.mealsList}>
-                {filterMeals(meals.recent).map((meal) => (
-                    <MealItem key={meal.id} {...meal} onAdd={handleAdd} />
+                {getFilteredFoods().map((food: any) => (
+                    <MealItem 
+                        key={food.id} 
+                        name={food.name || 'Unknown Food'}
+                        detail={`${food.measureType || ''} • ${food.calories || 0} kcal`}
+                        imageUrl={food.image}
+                        onAdd={handleAdd} 
+                        data={food}
+                    />
                 ))}
-                {filterMeals(meals.recent).length === 0 && (
-                    <Text style={styles.emptyText}>No results found</Text>
+                {getFilteredFoods().length === 0 && (
+                    <Text style={styles.emptyText}>No foods found for this category</Text>
                 )}
             </View>
-        </View>
-
-        <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-                <MaterialIcons name="star" size={20} color={PRIMARY} />
-                <Text style={styles.sectionTitle}>Frequent</Text>
-            </View>
-            <View style={styles.mealsList}>
-                {filterMeals(meals.frequent).map((meal) => (
-                    <MealItem key={meal.id} {...meal} onAdd={handleAdd} />
-                ))}
-                {filterMeals(meals.frequent).length === 0 && (
-                    <Text style={styles.emptyText}>No results found</Text>
-                )}
-            </View>
-        </View>
+         )}
       </ScrollView>
 
       {/* Fixed Footer Action */}
@@ -337,6 +394,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(204,255,0,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  mealImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
   mealName: {
     fontSize: 16,
