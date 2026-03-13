@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,52 +11,155 @@ import {
   ImageBackground,
   Dimensions,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import firestore from '@react-native-firebase/firestore';
 
 const { width } = Dimensions.get('window');
 
-// Mock data for workout details (in a real app, this would come from an API or global state)
-const workoutDetails = {
-  1: {
-    title: 'Full Body Blast',
-    level: 'Intermediate',
-    duration: '45 min',
-    equipment: 'Dumbbells, Bench',
-    target: 'Chest, Back',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAe6izQ0Ztc_1FLxlMoHUaRoQR1UdvESJUKseVdIr9DTsqykilnUMonbrk7omWWCsMzwIfMruY36WgTLGfhYSnAtjD49XZ4C7vbAX5AB4rTnPqujhn0h4oVD04Y3FAtMCyeNtJZF7QKynQ_sWaNcAhv64eXC2l01EFHaGb7f0Zt-XWRNm_7F51PRTPfZPQ9sRTyuQQixb8TXvblUhdr5kbU4EOUk60LR_APO3dPlcq1Aeyub2-VYovHA38MZNcr0a1qFJwuNHPbH1A',
-    exercises: [
-      { id: 1, name: 'Incline Bench Press', sets: 4, reps: '10-12', muscles: ['Chest', 'Triceps'], image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB4If4UziMY8b6WwlmYtubwnVCn_W5USqJbOoJpaqiR4HV8e42X_xfdXKho7nch12qzH7ZHC4ap_KN4AIKKmTSY_NKv0Pf0aldzF4lFjdIEMDu6QTkbsSjJKV2pvqP-qt1SLS1_mX0TUHtTSHw4gBjUGUpfbq1K5J3XK07dFP2RUn_P8aepDJPd7EyNs4hknFzpTl4ozbYenQif9EvQU9H6BFMNXGCu_9Hzms4aoXj7JfsE0cSoBM1KfOf5_RODSocu062ZzYOHgGc' },
-      { id: 2, name: 'Single Arm Rows', sets: 3, reps: '12', muscles: ['Lats', 'Biceps'], image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBGVzzC3c0Jj6iXPLFEUqV8RaLBTtt0wCt2z9BKAmdUS1Oso7k3cLgaudQh7hfhJpLKH434KN_S1HzGIGb8XJjVGgbPasskIc2a7-FqGyseNCkDWWxcoPmGATTnnVUavP0-zGo4Uq1_p3dvDyJXBzq-JXP665AO5iQ7MWi1X0B5mMAATv6z6RNAyJUHsnShrMBp9Q-xGTlhDH3hfK7JgOwgCxGLxFICq0kX2_wYLn5kuOC8jUehI3WNuoLeS7TawGBYA5v7KsI1iAU' },
-      { id: 3, name: 'Military Press', sets: 4, reps: '8', muscles: ['Shoulders'], image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD0EYbzU0Y5MyuRbsKb-aV5ylNI3RXiG5afQrYNn-sLPbjSfTcxiC05jINjHhkkmdD61BNa__BwnzyZlYPbg9l9inMr7Zp5rk0VcZgdRV6CBrpcP6zA6Aee8y9Vyg-hyTVVz0mmsQrSo9HGpst-RlFMgAZosdbTotwf19YjlvAw0M7S3lV8dp5PWNarem8gggRO_S_7FQCZ5-Xnj9qr4C_LE9jPC8doiFc_QP-d4dKkd-2S5mWZpmFTl6MOQFdbYBn-BSWdKHpHRaM' },
-      { id: 4, name: 'Pull Ups', sets: 3, reps: 'Max', muscles: ['Back'], image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDmcAMgYsTCNGpTeFRSzeqs85x6ZceT1-HpAkb5a2wHZA8rIOAz-7npuyxl4blT2d4Sy_IhnMvItvYtAHSIAlbQDvUB3n1GeOFCLGCjgqcUkTN0TnYITfR2xuYACfzEbs1Rd_c81iJAFj3bGRW1QrF4zhpDjwxZ6I1efoq58MHqHWraeMNxs6MuM_o-iFOhNtXjhWjVhHGWn56i0ZwXpI9ovk-l-ygKGItgfVm_SEQ-cr1BODLEv7XIO5MfVaM21BpnQwGBuWSEQcs' },
-    ]
-  },
-  // Default fallback
-  default: {
-    title: 'Upper Body Power',
-    level: 'Advanced',
-    duration: '45 min',
-    equipment: 'Dumbbells, Bench',
-    target: 'Chest, Back',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBcdXH8iZhUm34SHGmjmOXRKoQX11pT-x0ehw_TodLXfcCaa4eeUJTrkU7QKMjKLbzBdpBl71Hf2JXy-BHFuJY0LDuKyRrheaL-2CBjxD_xJk4wgruNCFKY0tujby3fgmQHnKMyjNQ3An1s09d5D7oQWtR4ihVLWvW0WYIzLmE7XbhptxJBbF-cGe63fqkvy8CbJXb5hadFmQa4-mvQfq4M6wXvkPn7DH-UsQKJWI9dN-M_rAW6o501cNx_2BCErBiq3HfoW-YWld8',
-    exercises: [
-      { id: 1, name: 'Incline Bench Press', sets: 4, reps: '10-12', muscles: ['Chest', 'Triceps'], image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB4If4UziMY8b6WwlmYtubwnVCn_W5USqJbOoJpaqiR4HV8e42X_xfdXKho7nch12qzH7ZHC4ap_KN4AIKKmTSY_NKv0Pf0aldzF4lFjdIEMDu6QTkbsSjJKV2pvqP-qt1SLS1_mX0TUHtTSHw4gBjUGUpfbq1K5J3XK07dFP2RUn_P8aepDJPd7EyNs4hknFzpTl4ozbYenQif9EvQU9H6BFMNXGCu_9Hzms4aoXj7JfsE0cSoBM1KfOf5_RODSocu062ZzYOHgGc' },
-      { id: 2, name: 'Single Arm Rows', sets: 3, reps: '12', muscles: ['Lats', 'Biceps'], image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBGVzzC3c0Jj6iXPLFEUqV8RaLBTtt0wCt2z9BKAmdUS1Oso7k3cLgaudQh7hfhJpLKH434KN_S1HzGIGb8XJjVGgbPasskIc2a7-FqGyseNCkDWWxcoPmGATTnnVUavP0-zGo4Uq1_p3dvDyJXBzq-JXP665AO5iQ7MWi1X0B5mMAATv6z6RNAyJUHsnShrMBp9Q-xGTlhDH3hfK7JgOwgCxGLxFICq0kX2_wYLn5kuOC8jUehI3WNuoLeS7TawGBYA5v7KsI1iAU' },
-      { id: 3, name: 'Military Press', sets: 4, reps: '8', muscles: ['Shoulders'], image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD0EYbzU0Y5MyuRbsKb-aV5ylNI3RXiG5afQrYNn-sLPbjSfTcxiC05jINjHhkkmdD61BNa__BwnzyZlYPbg9l9inMr7Zp5rk0VcZgdRV6CBrpcP6zA6Aee8y9Vyg-hyTVVz0mmsQrSo9HGpst-RlFMgAZosdbTotwf19YjlvAw0M7S3lV8dp5PWNarem8gggRO_S_7FQCZ5-Xnj9qr4C_LE9jPC8doiFc_QP-d4dKkd-2S5mWZpmFTl6MOQFdbYBn-BSWdKHpHRaM' },
-      { id: 4, name: 'Pull Ups', sets: 3, reps: 'Max', muscles: ['Back'], image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDmcAMgYsTCNGpTeFRSzeqs85x6ZceT1-HpAkb5a2wHZA8rIOAz-7npuyxl4blT2d4Sy_IhnMvItvYtAHSIAlbQDvUB3n1GeOFCLGCjgqcUkTN0TnYITfR2xuYACfzEbs1Rd_c81iJAFj3bGRW1QrF4zhpDjwxZ6I1efoq58MHqHWraeMNxs6MuM_o-iFOhNtXjhWjVhHGWn56i0ZwXpI9ovk-l-ygKGItgfVm_SEQ-cr1BODLEv7XIO5MfVaM21BpnQwGBuWSEQcs' },
-    ]
-  }
-};
+// Define types for fetched data
+interface Exercise {
+  id: string;
+  name: string;
+  sets: string | number;
+  reps: string | number;
+  image?: string;
+  muscles?: string[];
+  category?: string;
+  videoUrl?: string;
+  targetMuscleImage?: string;
+  muscleNames?: string[];
+  instructions?: string;
+}
+
+interface WorkoutDetails {
+  id: string;
+  title: string;
+  level: string;
+  duration: string;
+  equipment: string;
+  target: string;
+  image: string;
+  exercises: Exercise[];
+}
 
 export default function WorkoutDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
-  
-  // Get workout data based on ID, or use default if not found
-  const workout = workoutDetails[id] || workoutDetails.default;
+  const [workout, setWorkout] = useState<WorkoutDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchWorkoutDetails = async () => {
+      try {
+        const workoutDoc = await firestore().collection('workout_programs').doc(String(id)).get();
+        
+        if (workoutDoc.exists) {
+          const data = workoutDoc.data();
+          
+          // Process exercises array
+          const exercisePromises = (data?.exercises || []).map(async (exercise: any, index: number) => {
+             let imageUrl = 'https://via.placeholder.com/150';
+             let videoUrl = '';
+             let targetMuscleImage = '';
+             let muscleNames: string[] = [];
+             let instructions = '';
+             
+             try {
+                // Fetch image from 'workouts' collection based on exercise name
+                // Note: Assuming 'name' field in 'workouts' collection matches the exercise name
+                const workoutQuery = await firestore()
+                  .collection('workouts')
+                  .where('name', '==', exercise.name)
+                  .limit(1)
+                  .get();
+                
+                if (!workoutQuery.empty) {
+                   const workoutData = workoutQuery.docs[0].data();
+                   imageUrl = workoutData.mainImage || workoutData.imageUrl || imageUrl;
+                   videoUrl = workoutData.videoUrl || '';
+                   instructions = workoutData.instructions || '';
+                   
+                   if (workoutData.muscleGroups && Array.isArray(workoutData.muscleGroups)) {
+                      if (workoutData.muscleGroups.length > 0) {
+                          targetMuscleImage = workoutData.muscleGroups[0].imageUrl || '';
+                      }
+                      muscleNames = workoutData.muscleGroups.map((mg: any) => mg.name).filter(Boolean);
+                   }
+                }
+             } catch (err) {
+                console.log(`Error fetching image for exercise ${exercise.name}:`, err);
+             }
+
+             return {
+               id: `ex-${index}`,
+               name: exercise.name || 'Unknown Exercise',
+               sets: exercise.sets || '0',
+               reps: exercise.reps || '0',
+               category: exercise.category,
+               image: imageUrl,
+               muscles: muscleNames,
+               videoUrl,
+               targetMuscleImage,
+               muscleNames,
+               instructions
+             };
+          });
+
+          const exercisesData = await Promise.all(exercisePromises);
+
+          // Parse equipment and target arrays
+          const equipment = Array.isArray(data?.equipment) ? data.equipment.join(', ') : (data?.equipment || 'None');
+          const target = Array.isArray(data?.targetMuscles) ? data.targetMuscles.join(', ') : (data?.targetMuscles || 'General');
+
+          setWorkout({
+            id: workoutDoc.id,
+            title: data?.name || 'Untitled Workout',
+            level: data?.level || 'General',
+            duration: data?.duration || '0 min',
+            equipment: equipment,
+            target: target,
+            image: data?.coverImage || 'https://via.placeholder.com/300',
+            exercises: exercisesData
+          });
+        } else {
+            console.log("Workout document does not exist");
+        }
+      } catch (error) {
+        console.error("Error fetching workout details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWorkoutDetails();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <StatusBar barStyle="light-content" backgroundColor="#1f230f" />
+        <ActivityIndicator size="large" color="#ccff00" />
+      </SafeAreaView>
+    );
+  }
+
+  if (!workout) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <StatusBar barStyle="light-content" backgroundColor="#1f230f" />
+        <Text style={{ color: '#f1f5f9', fontSize: 18 }}>Workout not found</Text>
+        <TouchableOpacity style={{ marginTop: 20 }} onPress={() => router.back()}>
+             <Text style={{ color: '#ccff00', fontSize: 16 }}>Go Back</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -139,7 +242,12 @@ export default function WorkoutDetailsScreen() {
               <TouchableOpacity 
                 key={exercise.id} 
                 style={[styles.exerciseItem, index === workout.exercises.length - 1 && styles.lastItem]}
-                onPress={() => router.push('/screens/ExerciseDetailScreen')}
+                onPress={() => router.push({
+                  pathname: '/screens/ExerciseDetailScreen',
+                  params: {
+                    exercise: JSON.stringify(exercise)
+                  }
+                })}
                 activeOpacity={0.7}
               >
                 <View style={styles.exerciseImageContainer}>
@@ -148,13 +256,7 @@ export default function WorkoutDetailsScreen() {
                 <View style={styles.exerciseContent}>
                   <Text style={styles.exerciseName}>{exercise.name}</Text>
                   <Text style={styles.exerciseSets}>{exercise.sets} Sets • {exercise.reps} Reps</Text>
-                  <View style={styles.musclesContainer}>
-                    {exercise.muscles.map((muscle, idx) => (
-                      <View key={idx} style={styles.muscleBadge}>
-                        <Text style={styles.muscleText}>{muscle}</Text>
-                      </View>
-                    ))}
-                  </View>
+                  {/* Muscles container removed as data is not available from source */}
                 </View>
                 <MaterialIcons name="drag-indicator" size={24} color="#94a3b8" />
               </TouchableOpacity>
@@ -325,9 +427,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
+    backgroundColor: '#2d3319', // Lighter background color (lighter than #1f230f)
+    borderRadius: 16, // Slightly rounder corners
     gap: 16,
+    marginBottom: 8, // Add spacing between items
+    borderWidth: 1,
+    borderColor: 'rgba(204, 255, 0, 0.1)', // Subtle green border
   },
   lastItem: {
     opacity: 0.6,

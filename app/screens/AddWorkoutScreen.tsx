@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,74 +10,102 @@ import {
   Platform,
   TextInput,
   ImageBackground,
+  ActivityIndicator,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import firestore from '@react-native-firebase/firestore';
 
-// Mock data for workouts
-const workoutLibrary = [
-  {
-    id: 1,
-    title: 'Full Body Blast',
-    duration: '45 mins',
-    exercises: 8,
-    level: 'Intermediate',
-    levelColor: '#ccff00',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAe6izQ0Ztc_1FLxlMoHUaRoQR1UdvESJUKseVdIr9DTsqykilnUMonbrk7omWWCsMzwIfMruY36WgTLGfhYSnAtjD49XZ4C7vbAX5AB4rTnPqujhn0h4oVD04Y3FAtMCyeNtJZF7QKynQ_sWaNcAhv64eXC2l01EFHaGb7f0Zt-XWRNm_7F51PRTPfZPQ9sRTyuQQixb8TXvblUhdr5kbU4EOUk60LR_APO3dPlcq1Aeyub2-VYovHA38MZNcr0a1qFJwuNHPbH1A',
-    category: 'Full Body'
-  },
-  {
-    id: 2,
-    title: 'Upper Body Power',
-    duration: '30 mins',
-    exercises: 6,
-    level: 'Advanced',
-    levelColor: '#ef4444',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBvuWL4scLhi2ya4Mys5iI2sg3yec8eR7q8F9JV31WObbUDK0BaMhahCRIKQUYXvQKMHN2YJ4wSEoeiNYgnaVBnyNJ8iVQHE2HF52Nmnz-b_Km5g7MSQaS9S8rtPh6dD_KCX64L-99jIx1xFxKGXQkd55Xs3tGnRxvY-9CoQ8HFxkf5VKSWQeKpAnB7am0bhcCBGDMsYtytutYsaNe3ymS4Ins4O1Z9pGeyu_ezlTocOv2wt1qovjRIVy2GMuaNAW21MfwGWQGYoSA',
-    category: 'Push'
-  },
-  {
-    id: 3,
-    title: 'Leg Day Routine',
-    duration: '50 mins',
-    exercises: 10,
-    level: 'Beginner',
-    levelColor: '#3b82f6',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDVe-Dx4h62LavfWndD3uoE7528OUYuDTV9HCdh9Lz-Q10PayTRcoAVjENF1-PC3OZzbZxZ0Jybh96eELL58tnzwIBRB2t7wYBTA1nMPnQwV12baW2t4YX-qJFr84kPEQOBdvw6Cnd6q8KSMpTvqrBRsPmhoJbtkti0IrbPsdPZYuq28o6kBVxBfItokvNoJ4bmTsG7SHCZc4ptEe9fiGs3oeOctkRlGPt1WbIxd3Wks-HeU-pWQvXvRiMFoq-RTOLF4mAoQRWSsdc',
-    category: 'Legs'
-  },
-  {
-    id: 4,
-    title: 'HIIT Cardio Burn',
-    duration: '20 mins',
-    exercises: 5,
-    level: 'Intermediate',
-    levelColor: '#ccff00',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCMDYheDvL91bi4IVByVIQynjLDa0lKR89kfRBzSq584Smwj7xZO5kFNCOima32IHOuPYQcd8TWrVYGATw3XVkH4-fCZUUmHnCLyhWranMcW4vzSQpjkk2gvLv73f8aSKZsAE0BbXt9wgygHUvCBu01RurEh3jl5wD9fsbguDNZhjEtLTMIp9WVfWF8YobUzMXrmH5Cy8nBC6_g60tC6vPdMuD1HbWxyuc1LS32E-yqW8zjpkW7jRO17K6Fv1PfoXQUTcPpKCjCHQg',
-    category: 'HIIT'
-  }
-];
+// Define Workout interface
+interface Workout {
+  id: string;
+  title: string;
+  duration: string;
+  exercises: number;
+  level: string;
+  levelColor: string;
+  image: string;
+  category: string;
+}
 
 const categories = [
   { id: 'all', label: 'All' },
-  { id: 'full', label: 'Full Body' },
-  { id: 'push', label: 'Push' },
-  { id: 'pull', label: 'Pull' },
-  { id: 'legs', label: 'Legs' },
-  { id: 'hiit', label: 'HIIT' },
 ];
 
 export default function AddWorkoutScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [categoryList, setCategoryList] = useState(categories);
 
-  const handleAddWorkout = (workoutId: number) => {
+  useEffect(() => {
+    const unsubscribe = firestore()
+      .collection('workout_programs')
+      .onSnapshot(querySnapshot => {
+        const workoutsData: Workout[] = [];
+        const fetchedCategories = new Set<string>();
+        
+        querySnapshot.forEach(documentSnapshot => {
+          const data = documentSnapshot.data();
+          
+          // Map level color based on level text
+          let levelColor = '#ccff00'; // Default Green
+          const levelLower = (data.level || '').toLowerCase();
+          if (levelLower.includes('beginner')) levelColor = '#3b82f6'; // Blue
+          else if (levelLower.includes('advanced')) levelColor = '#ef4444'; // Red
+          
+          if (data.workout_type_name) {
+            fetchedCategories.add(data.workout_type_name);
+          }
+
+          workoutsData.push({
+            id: documentSnapshot.id,
+            title: data.name || 'Untitled Workout',
+            duration: data.duration || '0 mins',
+            exercises: data.exercises ? data.exercises.length : 0, // Assuming exercises is an array, or default to 0
+            level: data.level || 'General',
+            levelColor: levelColor,
+            image: data.coverImage || 'https://via.placeholder.com/300', // Default placeholder
+            category: data.workout_type_name || 'General', // Use workout_type_name as category
+          });
+        });
+
+        // Update category list dynamically
+        const newCategories = [
+          { id: 'all', label: 'All' },
+          ...Array.from(fetchedCategories).map(cat => ({
+            id: cat,
+            label: cat
+          }))
+        ];
+        
+        setCategoryList(newCategories);
+        setWorkouts(workoutsData);
+        setLoading(false);
+      }, error => {
+        console.error("Error fetching workouts: ", error);
+        setLoading(false);
+      });
+
+    // Unsubscribe from events when no longer in use
+    return () => unsubscribe();
+  }, []);
+
+  const handleAddWorkout = (workoutId: string) => {
     // Logic to add workout to the program would go here
     // For now, just go back
     router.back();
   };
+
+  const filteredWorkouts = workouts.filter(workout => {
+    const matchesSearch = workout.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || 
+                            (workout.category && workout.category.toLowerCase().includes(selectedCategory.toLowerCase())); // Simple category matching
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -114,7 +142,7 @@ export default function AddWorkoutScreen() {
       {/* Categories */}
       <View style={styles.categoriesContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesContent}>
-          {categories.map((cat) => (
+          {categoryList.map((cat) => (
             <TouchableOpacity
               key={cat.id}
               onPress={() => setSelectedCategory(cat.id)}
@@ -162,44 +190,48 @@ export default function AddWorkoutScreen() {
         </TouchableOpacity>
       </View>
 
-        {workoutLibrary.map((workout) => (
-          <TouchableOpacity 
-            key={workout.id} 
-            activeOpacity={0.9}
-            style={styles.card}
-            onPress={() => router.push({
-              pathname: '/screens/WorkoutDetailsScreen',
-              params: { id: workout.id }
-            })}
-          >
-            <ImageBackground
-              source={{ uri: workout.image }}
-              style={styles.cardImage}
-              imageStyle={{ borderRadius: 16 }}
+        {loading ? (
+          <ActivityIndicator size="large" color="#ccff00" style={{ marginTop: 20 }} />
+        ) : (
+          filteredWorkouts.map((workout) => (
+            <TouchableOpacity 
+              key={workout.id} 
+              activeOpacity={0.9}
+              style={styles.card}
+              onPress={() => router.push({
+                pathname: '/screens/WorkoutDetailsScreen',
+                params: { id: workout.id }
+              })}
             >
-              <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.8)']}
-                style={styles.cardOverlay}
-              />
-              <View style={[styles.levelBadge, { backgroundColor: workout.levelColor }]}>
-                <Text style={styles.levelText}>{workout.level}</Text>
-              </View>
-            </ImageBackground>
-            
-            <View style={styles.cardFooter}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cardTitle}>{workout.title}</Text>
-                <Text style={styles.cardSubtitle}>{workout.duration} • {workout.exercises} exercises</Text>
-              </View>
-              <TouchableOpacity 
-                style={styles.addButton}
-                onPress={() => handleAddWorkout(workout.id)}
+              <ImageBackground
+                source={{ uri: workout.image }}
+                style={styles.cardImage}
+                imageStyle={{ borderRadius: 16 }}
               >
-                <MaterialIcons name="add" size={24} color="#1f230f" />
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        ))}
+                <LinearGradient
+                  colors={['transparent', 'rgba(0,0,0,0.8)']}
+                  style={styles.cardOverlay}
+                />
+                <View style={[styles.levelBadge, { backgroundColor: workout.levelColor }]}>
+                  <Text style={styles.levelText}>{workout.level}</Text>
+                </View>
+              </ImageBackground>
+              
+              <View style={styles.cardFooter}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cardTitle}>{workout.title}</Text>
+                  <Text style={styles.cardSubtitle}>{workout.duration} • {workout.exercises} exercises</Text>
+                </View>
+                <TouchableOpacity 
+                  style={styles.addButton}
+                  onPress={() => handleAddWorkout(workout.id)}
+                >
+                  <MaterialIcons name="add" size={24} color="#1f230f" />
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          ))
+        )}
         <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>

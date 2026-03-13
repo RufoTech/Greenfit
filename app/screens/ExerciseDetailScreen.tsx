@@ -1,28 +1,44 @@
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, SafeAreaView, Platform, StatusBar, Dimensions } from 'react-native';
+import { Dimensions, Image, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
+import { WebView } from 'react-native-webview';
 
 const PRIMARY = "#ccff00";
 const BG_DARK = "#1f230f";
 const { width } = Dimensions.get('window');
+
+// Helper to extract YouTube ID
+const getYoutubeId = (url: string) => {
+    if (!url) return null;
+    // Clean URL: remove whitespace, quotes, backticks
+    const cleanUrl = url.replace(/[\s"`']/g, "");
+    
+    // Regular expressions for different YouTube URL formats
+    const patterns = [
+        /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/,
+        /^([a-zA-Z0-9_-]{11})$/ // If the user just pasted the ID
+    ];
+
+    for (const pattern of patterns) {
+        const match = cleanUrl.match(pattern);
+        if (match && match[1]) {
+            return match[1];
+        }
+        // Check if the whole string matches the ID pattern (second regex)
+        if (match && match[0] && pattern.toString().includes('^')) {
+             return match[0];
+        }
+    }
+    
+    return null;
+};
 
 // Icons
 const Icons = {
   Back: () => (
     <Svg height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
       <Path d="M360-240 120-480l240-240 56 56-144 144h568v80H272l144 144-56 56Z"/>
-    </Svg>
-  ),
-  Play: () => (
-    <Svg height="36" viewBox="0 -960 960 960" width="36" fill="currentColor">
-      <Path d="M320-200v-560l440 280-440 280Z"/>
-    </Svg>
-  ),
-  Pause: () => (
-    <Svg height="36" viewBox="0 -960 960 960" width="36" fill="currentColor">
-      <Path d="M560-200v-560h160v560H560Zm-320 0v-560h160v560H240Z"/>
     </Svg>
   ),
   Reps: () => (
@@ -52,17 +68,73 @@ const Icons = {
   )
 };
 
-const muscles = [
-  { label: "Chest", sub: "Pectorals", active: true },
-  { label: "Arms", sub: "Triceps", active: false },
-  { label: "Shoulder", sub: "Front Delts", active: false },
-];
-
-const dots = [false, true, false, false];
-
 export default function ExerciseDetailScreen() {
   const [playing, setPlaying] = useState(false);
   const router = useRouter();
+  const { exercise: exerciseParam } = useLocalSearchParams();
+  const exerciseStr = Array.isArray(exerciseParam) ? exerciseParam[0] : exerciseParam;
+  
+  let exercise = null;
+  try {
+    exercise = exerciseStr ? JSON.parse(exerciseStr) : null;
+  } catch (error) {
+    console.error('Error parsing exercise:', error);
+  }
+  
+  // Robust Video ID Extraction
+  let videoId = null;
+  const rawVideoUrl = exercise?.videoUrl;
+
+  if (rawVideoUrl) {
+      // 1. Remove common noise characters: quotes, backticks, spaces
+      const cleanUrl = rawVideoUrl.replace(/[\s"`']/g, "");
+      
+      // 2. Try to get ID from cleaned URL using helper
+      videoId = getYoutubeId(cleanUrl);
+
+      // 3. Fallback: If still null, try to find the ID pattern directly in the original string
+      // This helps if the URL is embedded in other text
+      if (!videoId) {
+          const idPattern = /(?:v=|youtu\.be\/|\/)([a-zA-Z0-9_-]{11})/;
+          const match = rawVideoUrl.match(idPattern);
+          if (match && match[1]) {
+              videoId = match[1];
+          }
+      }
+  }
+  
+  // Create Plyr HTML
+  const plyrHTML = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+      <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+      <style>
+        body { margin: 0; padding: 0; background-color: #1e293b; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .plyr { width: 100%; height: 100%; }
+        .plyr__video-wrapper { height: 100%; }
+      </style>
+    </head>
+    <body>
+      <div class="plyr__video-embed" id="player">
+        <iframe
+          src="https://www.youtube.com/embed/${videoId}?origin=https://plyr.io&amp;iv_load_policy=3&amp;modestbranding=1&amp;playsinline=1&amp;showinfo=0&amp;rel=0&amp;enablejsapi=1"
+          allowfullscreen
+          allowtransparency
+          allow="autoplay"
+        ></iframe>
+      </div>
+      <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+      <script>
+        const player = new Plyr('#player', {
+             controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
+             youtube: { noCookie: true, rel: 0, showinfo: 0, iv_load_policy: 3, modestbranding: 1 }
+        });
+      </script>
+    </body>
+    </html>
+  `;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -78,49 +150,41 @@ export default function ExerciseDetailScreen() {
              <Icons.Back />
           </View>
         </TouchableOpacity>
-        <Text style={styles.appBarTitle}>Məşq Sessiyası</Text>
+        <Text style={styles.appBarTitle}>Train Info</Text>
         <View style={{ width: 40 }} /> 
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Exercise Header */}
         <View style={styles.headerContainer}>
-          <Text style={styles.exerciseTitle}>Barbell Bench Press</Text>
-          <Text style={styles.exerciseSubtitle}>Sinə əzələlərini gücləndirən əsas məşq</Text>
+          <Text style={styles.exerciseTitle}>{exercise?.name || 'Unknown Exercise'}</Text>
+          <Text style={styles.exerciseSubtitle}>{exercise?.category || 'General'}</Text>
         </View>
 
         {/* Video Area */}
         <View style={styles.videoContainer}>
           <View style={styles.videoWrapper}>
-            <Image 
-                source={{ uri: "https://lh3.googleusercontent.com/aida-public/AB6AXuDU-xcu1tQdcxu-HNaBwif_zeKJTiJNBczgXw7J4iSp60UQQ7XeNRcnfLjZZVvv4RKllb7W7VTia-dBOo8yzSudbVLBnQldL7sqYxdS2rl2x3b1wUJLsKb7AiiS9Ts5Tb5oDrwuQ7nUOo9hrYhg496u6Oh23EWJne8bD5Wuk10DW4LDkDLKZJp0MVNxMVWj5dpE0y2M2a92BKeB2gpXmEHaQ_1xK1aAUFuccxUH1nnHbs30fGJ71jGFATQ751a73tk6MfDojQqygAA" }}
-                style={styles.videoImage}
-                resizeMode="cover"
-            />
-            <View style={styles.videoOverlay}>
-                <TouchableOpacity 
-                    style={styles.playButton}
-                    onPress={() => setPlaying(!playing)}
-                >
-                    <View style={{ color: BG_DARK }}>
-                        {playing ? <Icons.Pause /> : <Icons.Play />}
-                    </View>
-                </TouchableOpacity>
-
-                {/* Progress Bar */}
-                <View style={styles.progressContainer}>
-                    <View style={styles.progressBarWrapper}>
-                        <View style={[styles.progressBar, { width: '33%' }]}>
-                             <View style={styles.progressBarKnob} />
+            {videoId ? (
+                <WebView
+                    style={styles.webView}
+                    javaScriptEnabled={true}
+                    allowsFullscreenVideo={true}
+                    source={{ html: plyrHTML, baseUrl: "https://myapp.local" }}
+                    mediaPlaybackRequiresUserAction={false}
+                    renderLoading={() => (
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" color="#ccff00" />
+                            <Text style={styles.loadingText}>
+                                Loading video player...
+                            </Text>
                         </View>
-                        <View style={styles.progressBarRemaining} />
-                    </View>
-                    <View style={styles.timeContainer}>
-                        <Text style={styles.timeText}>01:12</Text>
-                        <Text style={styles.timeText}>03:45</Text>
-                    </View>
+                    )}
+                />
+            ) : (
+                <View style={[styles.videoOverlay, { backgroundColor: '#1e293b' }]}>
+                    <Text style={{ color: '#94a3b8' }}>No Video Available</Text>
                 </View>
-            </View>
+            )}
           </View>
         </View>
 
@@ -131,14 +195,14 @@ export default function ExerciseDetailScreen() {
                     <View style={{ color: '#94a3b8' }}><Icons.Reps /></View>
                     <Text style={styles.statLabel}>Təkrar (Reps)</Text>
                 </View>
-                <Text style={styles.statValue}>10</Text>
+                <Text style={styles.statValue}>{exercise?.reps || '-'}</Text>
             </View>
             <View style={styles.statBox}>
                 <View style={styles.statHeader}>
                     <View style={{ color: '#94a3b8' }}><Icons.Sets /></View>
                     <Text style={styles.statLabel}>Set Sayı</Text>
                 </View>
-                <Text style={styles.statValue}>2</Text>
+                <Text style={styles.statValue}>{exercise?.sets || '-'}</Text>
             </View>
         </View>
 
@@ -151,49 +215,38 @@ export default function ExerciseDetailScreen() {
             
             <View style={styles.musclesCard}>
                 <View style={styles.muscleImageContainer}>
-                    <Image 
-                        source={{ uri: "https://lh3.googleusercontent.com/aida-public/AB6AXuC0xlZS9lWVaYyHoLcSAm6mctlftO7RI91PEN48_WjcBd01gBzR_4kfLeBqIg3uNFdmWNlAynXRJRUpF-uyL9Sw0f8E4J8Oz3KO5GydS63Jc5Qnh8_cWoq0ajqLqc58aCfgviiZ5gJOZaspP7Eo3lZPanMaTU6loDKQKQmX04I3rlAo0mT0I0hCrPdVoO1P73KoB6_g-eloOHqjYD5DkRjB0Mm7wSnH7D-xviofZ4a6AWZFTdkRs9BCFkeZryMnzhAnvUcY3iWj9-k" }}
-                        style={styles.muscleImage}
-                        resizeMode="contain"
-                    />
+                    {exercise?.targetMuscleImage ? (
+                        <Image 
+                            source={{ uri: exercise.targetMuscleImage }}
+                            style={styles.muscleImage}
+                            resizeMode="contain"
+                        />
+                    ) : (
+                        <View style={[styles.muscleImage, { justifyContent: 'center', alignItems: 'center' }]}>
+                             <Text style={{ color: '#94a3b8' }}>No Image Available</Text>
+                        </View>
+                    )}
                     <View style={styles.muscleImageOverlay} />
                 </View>
                 
                 <View style={styles.muscleGrid}>
-                    {muscles.map((m, i) => (
-                        <View key={i} style={[styles.muscleItem, { borderColor: m.active ? `${PRIMARY}4d` : "#334155" }]}>
-                            <Text style={[styles.muscleItemLabel, { color: m.active ? PRIMARY : "#94a3b8" }]}>{m.label}</Text>
-                            <Text style={styles.muscleItemSub}>{m.sub}</Text>
+                    {(exercise?.muscleNames || []).map((m: string, i: number) => (
+                        <View key={i} style={[styles.muscleItem, { borderColor: "#334155" }]}>
+                            <Text style={[styles.muscleItemLabel, { color: PRIMARY }]}>{m}</Text>
                         </View>
                     ))}
+                    {(exercise?.muscleNames || []).length === 0 && (
+                        <Text style={{ color: '#94a3b8', fontStyle: 'italic' }}>No target muscles specified</Text>
+                    )}
                 </View>
             </View>
         </View>
 
-        {/* Navigation Buttons */}
+        {/* Navigation Buttons - Optional, maybe remove or implement logic */}
+        {/* Keeping them but they won't do much without logic */}
         <View style={styles.footer}>
             <View style={styles.dotsContainer}>
-                {dots.map((active, i) => (
-                    <View 
-                        key={i} 
-                        style={[
-                            styles.dot, 
-                            { width: active ? 24 : 8, backgroundColor: active ? PRIMARY : "#334155" }
-                        ]} 
-                    />
-                ))}
-            </View>
-            
-            <View style={styles.buttonsContainer}>
-                <TouchableOpacity style={styles.prevButton}>
-                    <View style={{ color: '#f1f5f9' }}><Icons.ChevronLeft /></View>
-                    <Text style={styles.prevButtonText}>Əvvəlki</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity style={styles.nextButton}>
-                    <Text style={styles.nextButtonText}>Növbəti</Text>
-                    <View style={{ color: BG_DARK }}><Icons.ChevronRight /></View>
-                </TouchableOpacity>
+                 {/* Dots logic removed for now */}
             </View>
         </View>
 
@@ -252,15 +305,29 @@ const styles = StyleSheet.create({
   },
   videoWrapper: {
     width: '100%',
-    aspectRatio: 16 / 9,
+    height: 220, // Fixed height for WebView
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#1e293b',
     borderWidth: 2,
     borderColor: `${PRIMARY}33`,
     position: 'relative',
+    // Removed justifyContent and alignItems to let WebView fill the space
+  },
+  webView: {
+    flex: 1,
+    backgroundColor: '#1e293b',
+  },
+  loadingContainer: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#1e293b',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#94a3b8',
+    fontSize: 12,
   },
   videoImage: {
     width: '100%',
