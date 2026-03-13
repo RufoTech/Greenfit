@@ -92,15 +92,30 @@ export default function WorkoutDetailsScreen() {
              if (customDoc.exists) {
                  data = customDoc.data();
                  
-                 // Map custom exercises to component format
-                 const exercisesData = (data.exercises || []).map((ex: any, index: number) => ({
-                     id: ex.id || `ex-${index}`,
-                     name: ex.name,
-                     sets: ex.sets,
-                     reps: ex.reps,
-                     image: ex.mainImage || 'https://via.placeholder.com/150',
-                     category: ex.type || 'General',
-                     // Add other fields if needed
+                 // Map custom exercises to component format using Promise.all for async videoUrl fetch
+                 const exercisesData = await Promise.all((data.exercises || []).map(async (ex: any, index: number) => {
+                     let videoUrl = ex.videoUrl || '';
+                     if (!videoUrl) {
+                        try {
+                            const snapshot = await firestore().collection('workouts').where('name', '==', ex.name).limit(1).get();
+                            if (!snapshot.empty) {
+                                videoUrl = snapshot.docs[0].data().videoUrl || '';
+                            }
+                        } catch (e) { console.log('Error fetching videoUrl', e); }
+                     }
+
+                     return {
+                        id: ex.id || `ex-${index}`,
+                        name: ex.name,
+                        sets: ex.sets,
+                        reps: ex.reps,
+                        image: ex.mainImage || ex.image || 'https://via.placeholder.com/150',
+                        category: ex.type || ex.category || 'General',
+                        videoUrl: videoUrl,
+                        targetMuscleImage: ex.targetMuscleImage || ex.mainImage || '',
+                        muscleNames: ex.muscleNames || ex.muscles || [],
+                        instructions: ex.instructions || ''
+                     };
                  }));
 
                  setWorkout({
