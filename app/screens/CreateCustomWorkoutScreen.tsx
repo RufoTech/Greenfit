@@ -37,7 +37,6 @@ export default function CreateCustomWorkoutScreen() {
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerTitle}>Create Custom Program</Text>
-          <Text style={styles.headerSubtitle}>Fərdi Proqram Yarat</Text>
         </View>
 
       </View>
@@ -49,13 +48,13 @@ export default function CreateCustomWorkoutScreen() {
       >
         {/* Program Details Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Program Details / Proqram Təfərrüatları</Text>
+          <Text style={styles.sectionTitle}>Program Details</Text>
           
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>PROGRAM NAME / PROQRAMIN ADI</Text>
+            <Text style={styles.label}>PROGRAM NAME </Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. Summer Shred / Yay Forması"
+              placeholder="e.g. Summer Shred"
               placeholderTextColor="#64748b"
               value={programName}
               onChangeText={setProgramName}
@@ -63,10 +62,10 @@ export default function CreateCustomWorkoutScreen() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>DESCRIPTION / TƏSVİR</Text>
+            <Text style={styles.label}>DESCRIPTION</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
-              placeholder="Describe your program goals / Məqsədlərinizi təsvir edin"
+              placeholder="Describe your program goals"
               placeholderTextColor="#64748b"
               value={description}
               onChangeText={setDescription}
@@ -80,7 +79,7 @@ export default function CreateCustomWorkoutScreen() {
         {/* Workout Builder Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Workout Builder / Qurucu</Text>
+            <Text style={styles.sectionTitle}>Workout Builder</Text>
 
           </View>
 
@@ -89,7 +88,7 @@ export default function CreateCustomWorkoutScreen() {
             <View style={styles.dayHeader}>
               <View style={styles.dayTitleContainer}>
                 <MaterialIcons name="drag-indicator" size={24} color="#94a3b8" />
-                <Text style={styles.dayTitle}>Day 1: Upper Body / Üst Bədən</Text>
+                <Text style={styles.dayTitle}>Day 1: Upper Body</Text>
               </View>
               <TouchableOpacity style={styles.deleteButton}>
                 <MaterialIcons name="delete" size={20} color="#ef4444" />
@@ -133,9 +132,12 @@ export default function CreateCustomWorkoutScreen() {
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity style={styles.addExerciseButton}>
+              <TouchableOpacity 
+                style={styles.addExerciseButton}
+                onPress={() => router.push('/screens/ExerciseLibraryScreen')}
+              >
                 <MaterialIcons name="add-circle-outline" size={20} color="#64748b" />
-                <Text style={styles.addExerciseText}>Add Exercise / Məşq Əlavə Et</Text>
+                <Text style={styles.addExerciseText}>Add Exercise</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -157,7 +159,7 @@ export default function CreateCustomWorkoutScreen() {
             <Text style={styles.draftButtonText}>Draft</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.publishButton}>
-            <Text style={styles.publishButtonText}>Publish Program / Proqramı Dərc Et</Text>
+            <Text style={styles.publishButtonText}>Publish Program</Text>
           </TouchableOpacity>
         </View>
       </LinearGradient>
