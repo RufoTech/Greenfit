@@ -146,7 +146,13 @@ export default function QuickActionsOverlay({ visible, onClose }: QuickActionsOv
               iconName="monitor-weight" 
               onPress={() => handleActionPress('/screens/LogWeightScreen')}
           />
-          <View style={styles.actionButton} />
+          <QuickActionButton 
+              title="Workout Library" 
+              subtitle="" 
+              IconComponent={MaterialIcons} 
+              iconName="fitness-center" 
+              onPress={() => handleActionPress('/screens/WorkoutLibraryScreen')}
+          />
         </View>
 
         <View style={styles.closeButtonContainer}>

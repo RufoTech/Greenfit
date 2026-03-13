@@ -58,73 +58,64 @@ export default function ProgramsScreen() {
         
         {/* Active Program Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>ACTIVE PROGRAM</Text>
+          <Text style={styles.sectionLabel}>YOUR PROGRAM</Text>
           
           <TouchableOpacity 
             style={styles.activeProgramCard}
             activeOpacity={0.9}
+            onPress={() => router.push('/screens/CreateProgramScreen')}
           >
-            <View style={styles.activeImageContainer}>
-              <Image 
-                source={{ uri: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=800' }}
-                style={styles.activeImage}
-              />
+            <ImageBackground
+              source={{ uri: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=800' }}
+              style={styles.activeImageBackground}
+              imageStyle={{ borderRadius: 24 }}
+            >
               <LinearGradient
-                colors={['transparent', '#1f230f']}
+                colors={['rgba(31, 35, 15, 0.3)', 'rgba(31, 35, 15, 0.9)']}
                 style={styles.activeGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-              />
-            </View>
+              >
+                <View style={styles.activeContent}>
+                  <View style={styles.activeHeader}>
+                    <View style={styles.activeTitleContainer}>
+                      <Text style={styles.activeTitle}>Create Your Plan</Text>
+                      <Text style={styles.activeSubtitle}>Start your journey today</Text>
+                    </View>
+                    <TouchableOpacity style={styles.continueButton}>
+                      <MaterialIcons name="add" size={20} color="#1f230f" />
+                      <Text style={styles.continueButtonText}>Create</Text>
+                    </TouchableOpacity>
+                  </View>
 
-            <View style={styles.activeContent}>
-              <View style={styles.activeHeader}>
-                <View style={styles.activeTitleContainer}>
-                  <Text style={styles.activeTitle}>6-Week Shred</Text>
-                  <Text style={styles.activeSubtitle}>Week 3, Day 4</Text>
+                  <View style={styles.progressContainer}>
+                    <View style={styles.progressHeader}>
+                      <Text style={styles.progressLabel}>PROGRESS</Text>
+                      <Text style={styles.progressValue}>0%</Text>
+                    </View>
+                    <View style={styles.progressBarBg}>
+                      <View style={[styles.progressBarFill, { width: '0%' }]} />
+                    </View>
+                  </View>
                 </View>
-                <TouchableOpacity style={styles.continueButton}>
-                  <Text style={styles.continueButtonText}>Continue</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.progressContainer}>
-                <View style={styles.progressHeader}>
-                  <Text style={styles.progressLabel}>PROGRESS</Text>
-                  <Text style={styles.progressValue}>35%</Text>
-                </View>
-                <View style={styles.progressBarBg}>
-                  <View style={[styles.progressBarFill, { width: '35%' }]} />
-                </View>
-              </View>
-            </View>
+              </LinearGradient>
+            </ImageBackground>
           </TouchableOpacity>
         </View>
 
-        {/* Quick Actions */}
+        {/* Create Custom Program Section */}
         <View style={styles.section}>
-          <View style={styles.quickActionsGrid}>
-            <TouchableOpacity 
-                style={styles.quickActionCard}
-                onPress={() => router.push('/screens/CreateProgramScreen')}
-            >
-              <View style={styles.quickActionIcon}>
-                <Feather name="bar-chart-2" size={32} color="#ccff00" />
-              </View>
-              <Text style={styles.quickActionTitle}>Create Training</Text>
-              <Text style={styles.quickActionSubtitle}>Custom Program</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.quickActionCard}>
-              <View style={styles.quickActionIcon}>
-                <Feather name="edit" size={32} color="#ccff00" />
-              </View>
-              <Text style={styles.quickActionTitle}>Custom Program</Text>
-              <Text style={styles.quickActionSubtitle}>Personalized</Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={styles.sectionLabel}>CREATE CUSTOM</Text>
+          <TouchableOpacity 
+              style={styles.quickActionCard}
+              onPress={() => router.push('/screens/CreateCustomWorkoutScreen')}
+          >
+            <View style={styles.quickActionIcon}>
+              <Feather name="edit" size={32} color="#ccff00" />
+            </View>
+            <Text style={styles.quickActionTitle}>Custom Workout</Text>
+            <Text style={styles.quickActionSubtitle}>Design your own routine</Text>
+          </TouchableOpacity>
         </View>
-
+        
         {/* Recommended Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -226,7 +217,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   activeProgramCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(204, 255, 0, 0.1)',
@@ -239,26 +229,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 10,
+    height: 250,
   },
-  activeImageContainer: {
-    width: '100%',
-    aspectRatio: 16/8,
-    position: 'relative',
-  },
-  activeImage: {
+  activeImageBackground: {
     width: '100%',
     height: '100%',
   },
   activeGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
+    width: '100%',
     height: '100%',
+    justifyContent: 'flex-end',
   },
   activeContent: {
     padding: 24,
-    marginTop: -40,
   },
   activeHeader: {
     flexDirection: 'row',
@@ -282,9 +265,12 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     backgroundColor: '#ccff00',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   continueButtonText: {
     color: '#1f230f',
