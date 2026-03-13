@@ -1,27 +1,184 @@
+import { MaterialIcons } from '@expo/vector-icons';
+import firestore from '@react-native-firebase/firestore';
+import * as ImagePicker from 'expo-image-picker';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  Alert,
+  Dimensions,
+  Image,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
-  View,
-  SafeAreaView,
-  StatusBar,
-  TouchableOpacity,
-  ScrollView,
-  Platform,
   TextInput,
-  Image,
-  Dimensions,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
+interface Exercise {
+  id: string;
+  name: string;
+  mainImage: string;
+  reps?: string;
+  sets?: string;
+  type?: string;
+}
+
+import { useFocusEffect } from 'expo-router';
+import { SelectionStore } from '../utils/SelectionStore';
+
 export default function CreateCustomWorkoutScreen() {
   const router = useRouter();
+  
   const [programName, setProgramName] = useState('');
-  const [description, setDescription] = useState('');
+  const [duration, setDuration] = useState('');
+  const [equipment, setEquipment] = useState('');
+  const [targetMuscle, setTargetMuscle] = useState('');
+  const [level, setLevel] = useState('');
+  const [visibleDropdown, setVisibleDropdown] = useState<string | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{top: number, right: number} | null>(null);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+
+  // Check for selected exercise when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      const { data, action, targetId } = SelectionStore.getData();
+      
+      if (data && action) {
+        // Standardize exercise object
+        const newExercise: Exercise = {
+          id: Math.random().toString(36).substr(2, 9),
+          name: data.name,
+          mainImage: data.mainImage || data.targetMuscleImage || 'https://via.placeholder.com/150',
+          reps: data.reps || '10',
+          sets: data.sets || '3',
+          type: data.type || data.category || 'General'
+        };
+
+        if (action === 'add') {
+          setExercises(prev => [...prev, newExercise]);
+        } else if (action === 'replace' && targetId) {
+          // Keep the ID of the exercise being replaced if you want, or generate new. 
+          // If we want to replace the slot, better keep the old ID or just replace the object.
+          // Let's replace the object but keep the array structure.
+          setExercises(prev => prev.map(ex => ex.id === targetId ? { ...newExercise, id: targetId } : ex));
+        }
+        
+        // Clear store
+        SelectionStore.clear();
+      }
+    }, [])
+  );
+
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setCoverImage(result.assets[0].uri);
+    }
+  };
+
+  const toggleDropdown = (id: string, event: any) => {
+    if (visibleDropdown === id) {
+      closeDropdown();
+    } else {
+      const { pageY } = event.nativeEvent;
+      // Adjust slightly to place below finger
+      setDropdownPosition({ top: pageY + 10, right: 16 });
+      setVisibleDropdown(id);
+    }
+  };
+
+  const closeDropdown = () => {
+    setVisibleDropdown(null);
+  };
+
+  const handleReplace = (id: string) => {
+    // Delay closing to allow touch to register
+    requestAnimationFrame(() => {
+      closeDropdown();
+      router.push({
+        pathname: '/screens/WorkoutLibraryScreen',
+        params: { 
+          selectionMode: 'true',
+          returnTo: '/screens/CreateCustomWorkoutScreen',
+          replaceId: id
+        }
+      });
+    });
+  };
+
+  const handleDelete = (id: string) => {
+    requestAnimationFrame(() => {
+      closeDropdown();
+      setExercises(prev => prev.filter(ex => ex.id !== id));
+    });
+  };
+
+  const handleAddExercise = () => {
+    router.push({
+      pathname: '/screens/WorkoutLibraryScreen',
+      params: { 
+        selectionMode: 'true',
+        returnTo: '/screens/CreateCustomWorkoutScreen'
+      }
+    });
+  };
+
+  const handleUpdateExercise = (id: string, field: 'sets' | 'reps', value: string) => {
+    setExercises(prev => prev.map(ex => 
+      ex.id === id ? { ...ex, [field]: value } : ex
+    ));
+  };
+
+  const handlePublish = async () => {
+    if (!programName.trim()) {
+      Alert.alert("Error", "Please enter a program name.");
+      return;
+    }
+    if (exercises.length === 0) {
+      Alert.alert("Error", "Please add at least one exercise.");
+      return;
+    }
+
+    try {
+      const userId = 'current-user-id'; // In real app, get from Auth context
+      
+      await firestore().collection('saved_workouts').add({
+        userId,
+        title: programName,
+        level: level || 'Custom', 
+        target: targetMuscle || 'Full Body',
+        equipment: equipment || 'None',
+        exerciseCount: exercises.length,
+        duration: duration || `${exercises.length * 5}`, 
+        image: coverImage || 'https://via.placeholder.com/300', 
+        exercises: exercises,
+        savedAt: firestore.FieldValue.serverTimestamp(),
+        isCustom: true
+      });
+
+      Alert.alert("Success", "Program created successfully!", [
+        { text: "OK", onPress: () => router.back() }
+      ]);
+    } catch (error) {
+      console.error("Error saving program:", error);
+      Alert.alert("Error", "Failed to save program.");
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -38,7 +195,6 @@ export default function CreateCustomWorkoutScreen() {
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerTitle}>Create Custom Program</Text>
         </View>
-
       </View>
 
       <ScrollView 
@@ -50,28 +206,61 @@ export default function CreateCustomWorkoutScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Program Details</Text>
           
+          <TouchableOpacity style={styles.addImageContainer} onPress={pickImage}>
+            {coverImage ? (
+              <Image source={{ uri: coverImage }} style={{ width: '100%', height: '100%' }} />
+            ) : (
+              <View style={styles.addImagePlaceholder}>
+                <MaterialIcons name="add-photo-alternate" size={32} color="#ccff00" />
+                <Text style={styles.addImageText}>Add Cover Image</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
+          <View style={styles.inputRow}>
+            <View style={[styles.inputContainer, { flex: 1 }]}>
+              <Text style={styles.label}>DURATION (MIN)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="45"
+                placeholderTextColor="#64748b"
+                value={duration}
+                onChangeText={setDuration}
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={{ width: 12 }} />
+            <View style={[styles.inputContainer, { flex: 1 }]}>
+              <Text style={styles.label}>TARGET MUSCLE</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Full Body"
+                placeholderTextColor="#64748b"
+                value={targetMuscle}
+                onChangeText={setTargetMuscle}
+              />
+            </View>
+          </View>
+          
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>PROGRAM NAME </Text>
+            <Text style={styles.label}>EQUIPMENT NEEDED</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. Summer Shred"
+              placeholder="Dumbbells, Bench"
               placeholderTextColor="#64748b"
-              value={programName}
-              onChangeText={setProgramName}
+              value={equipment}
+              onChangeText={setEquipment}
             />
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>DESCRIPTION</Text>
+            <Text style={styles.label}>LEVEL</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Describe your program goals"
+              style={styles.input}
+              placeholder="Beginner, Intermediate, Advanced"
               placeholderTextColor="#64748b"
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
+              value={level}
+              onChangeText={setLevel}
             />
           </View>
         </View>
@@ -80,7 +269,6 @@ export default function CreateCustomWorkoutScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Workout Builder</Text>
-
           </View>
 
           {/* Day 1 Card */}
@@ -88,53 +276,74 @@ export default function CreateCustomWorkoutScreen() {
             <View style={styles.dayHeader}>
               <View style={styles.dayTitleContainer}>
                 <MaterialIcons name="drag-indicator" size={24} color="#94a3b8" />
-                <Text style={styles.dayTitle}>Day 1: Upper Body</Text>
+                <TextInput
+                  style={styles.dayTitleInput}
+                  placeholder="Program Name (e.g. Upper Body)"
+                  placeholderTextColor="#64748b"
+                  value={programName}
+                  onChangeText={setProgramName}
+                />
               </View>
-              <TouchableOpacity style={styles.deleteButton}>
-                <MaterialIcons name="delete" size={20} color="#ef4444" />
-              </TouchableOpacity>
             </View>
 
             <View style={styles.dayContent}>
-              {/* Exercise Item 1 */}
-              <View style={styles.exerciseItem}>
-                <MaterialIcons name="drag-handle" size={24} color="#64748b" />
-                <View style={styles.exerciseImageContainer}>
-                  <Image 
-                    source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA62i1zCKJsucRq4OVtemqod1LBmCLsw_WzHhbYteGCHpkskfxmnWh1e8wTXSthBO9-n6mwOeMSpXdAFNdGB2de-0Zq8wsiJ-j4MXJogUrYfwRdSRleTYGIRqlGzauWE1TQuqvelN3sIj0-Il88YQ2IT7-CIorN7l-tKvf7D3Vf3xEA9h-B_ib3BSv0MEzgfiGV1hGVlysTo0YNADYDDmP2qVfCCdljgORqJ5DTIP6O--9XY1a6ZKl7Wu5VqzOwiSZem88injWmqMI' }} 
-                    style={styles.exerciseImage} 
-                  />
-                </View>
-                <View style={styles.exerciseInfo}>
-                  <Text style={styles.exerciseName}>Bench Press / Oturaraq Pres</Text>
-                  <Text style={styles.exerciseDetails}>4 Sets × 10 Reps</Text>
-                </View>
-                <TouchableOpacity>
-                  <MaterialIcons name="more-vert" size={24} color="#94a3b8" />
-                </TouchableOpacity>
-              </View>
-
-              {/* Exercise Item 2 */}
-              <View style={styles.exerciseItem}>
-                <MaterialIcons name="drag-handle" size={24} color="#64748b" />
-                <View style={styles.exerciseImageContainer}>
-                  <Image 
-                    source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBlxWNMFFJFth4r7Lvr0UQwNkJm9L1ITt004FPCzk8jaBBAnl2CQe-ygWMeFU4VbYxvdIQ0z9KVeTdoPsyYKCSpfBVMAOAqIvZpw4VJn5MJVBBvlFNRrLbDh_2XPJeeAgp9ceOLf4_Los7LIrIi1Msoch1EsffIuu1NT--rUMaxx65hyupEKCXxJIi9dUI1x3H4L4VKF84gmxyoUDENjl3ASkWqDRf3-J5ZyngMuwxrQp0WnHADLrpLn20uJSceD7MR3LEW0WNqPy0' }} 
-                    style={styles.exerciseImage} 
-                  />
-                </View>
-                <View style={styles.exerciseInfo}>
-                  <Text style={styles.exerciseName}>Pull Ups / Turnikdə Dartınma</Text>
-                  <Text style={styles.exerciseDetails}>3 Sets × Max</Text>
-                </View>
-                <TouchableOpacity>
-                  <MaterialIcons name="more-vert" size={24} color="#94a3b8" />
-                </TouchableOpacity>
-              </View>
+              {exercises.length === 0 ? (
+                <Text style={{ color: '#64748b', textAlign: 'center', padding: 20 }}>
+                  No exercises added yet. Tap "Add Exercise" to start.
+                </Text>
+              ) : (
+                exercises.map((exercise, index) => (
+                  <View 
+                    key={exercise.id} 
+                    style={styles.exerciseItem}
+                  >
+                    <MaterialIcons name="drag-handle" size={24} color="#64748b" />
+                    <View style={styles.exerciseImageContainer}>
+                      <Image 
+                        source={{ uri: exercise.mainImage }} 
+                        style={styles.exerciseImage} 
+                      />
+                    </View>
+                    <View style={styles.exerciseInfo}>
+                      <Text style={styles.exerciseName}>{exercise.name}</Text>
+                      <View style={styles.setsRepsContainer}>
+                        <View style={styles.setRepInputContainer}>
+                          <TextInput
+                            style={styles.setRepInput}
+                            value={exercise.sets}
+                            onChangeText={(val) => handleUpdateExercise(exercise.id, 'sets', val)}
+                            keyboardType="numeric"
+                            placeholder="3"
+                            placeholderTextColor="#64748b"
+                          />
+                          <Text style={styles.setRepLabel}>Sets</Text>
+                        </View>
+                        <Text style={styles.xDivider}>×</Text>
+                        <View style={styles.setRepInputContainer}>
+                          <TextInput
+                            style={styles.setRepInput}
+                            value={exercise.reps}
+                            onChangeText={(val) => handleUpdateExercise(exercise.id, 'reps', val)}
+                            keyboardType="numeric"
+                            placeholder="10"
+                            placeholderTextColor="#64748b"
+                          />
+                          <Text style={styles.setRepLabel}>Reps</Text>
+                        </View>
+                      </View>
+                    </View>
+                    <View style={{ position: 'relative' }}>
+                      <TouchableOpacity onPress={(e) => toggleDropdown(exercise.id, e)}>
+                        <MaterialIcons name="more-vert" size={24} color="#94a3b8" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))
+              )}
 
               <TouchableOpacity 
                 style={styles.addExerciseButton}
-                onPress={() => router.push('/screens/ExerciseLibraryScreen')}
+                onPress={handleAddExercise}
               >
                 <MaterialIcons name="add-circle-outline" size={20} color="#64748b" />
                 <Text style={styles.addExerciseText}>Add Exercise</Text>
@@ -142,11 +351,40 @@ export default function CreateCustomWorkoutScreen() {
             </View>
           </View>
 
-
         </View>
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Close Dropdown Overlay */}
+      {visibleDropdown && (
+        <TouchableWithoutFeedback onPress={closeDropdown}>
+          <View style={styles.dropdownOverlay} />
+        </TouchableWithoutFeedback>
+      )}
+
+      {/* Global Dropdown Menu */}
+      {visibleDropdown && dropdownPosition && (
+        <View style={[styles.dropdownMenu, { top: dropdownPosition.top, right: dropdownPosition.right }]}>
+          <TouchableOpacity 
+            style={styles.dropdownItem} 
+            onPress={() => visibleDropdown && handleReplace(visibleDropdown)}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="loop" size={20} color="#f1f5f9" />
+            <Text style={styles.dropdownText}>Replace</Text>
+          </TouchableOpacity>
+          <View style={styles.dropdownDivider} />
+          <TouchableOpacity 
+            style={styles.dropdownItem} 
+            onPress={() => visibleDropdown && handleDelete(visibleDropdown)}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="delete-outline" size={20} color="#ef4444" />
+            <Text style={[styles.dropdownText, { color: '#ef4444' }]}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Bottom Actions */}
       <LinearGradient
@@ -158,7 +396,7 @@ export default function CreateCustomWorkoutScreen() {
           <TouchableOpacity style={styles.draftButton}>
             <Text style={styles.draftButtonText}>Draft</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.publishButton}>
+          <TouchableOpacity style={styles.publishButton} onPress={handlePublish}>
             <Text style={styles.publishButtonText}>Publish Program</Text>
           </TouchableOpacity>
         </View>
@@ -197,21 +435,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  headerSubtitle: {
-    color: '#94a3b8',
-    fontSize: 12,
-  },
-  saveButton: {
-    backgroundColor: '#ccff00',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  saveButtonText: {
-    color: '#000000',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
   scrollView: {
     flex: 1,
   },
@@ -232,7 +455,28 @@ const styles = StyleSheet.create({
     color: '#ccff00',
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: 24,
+  },
+  addImageContainer: {
+    height: 180,
+    borderRadius: 12,
+    marginBottom: 24,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(204, 255, 0, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(204, 255, 0, 0.2)',
+    borderStyle: 'dashed',
+  },
+  addImagePlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  addImageText: {
+    color: '#ccff00',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   inputContainer: {
     marginBottom: 16,
@@ -254,36 +498,14 @@ const styles = StyleSheet.create({
     color: '#f1f5f9',
     fontSize: 16,
   },
-  textArea: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  addDayButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(204, 255, 0, 0.3)',
-    backgroundColor: 'rgba(204, 255, 0, 0.05)',
-  },
-  addDayText: {
-    color: '#ccff00',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
   dayCard: {
     backgroundColor: 'rgba(204, 255, 0, 0.05)',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(204, 255, 0, 0.1)',
-    overflow: 'hidden',
+    overflow: 'visible', // Changed to visible for dropdown
     marginBottom: 16,
-  },
-  dayCardCollapsed: {
-    opacity: 0.8,
+    zIndex: 1,
   },
   dayHeader: {
     flexDirection: 'row',
@@ -293,6 +515,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(204, 255, 0, 0.1)',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(204, 255, 0, 0.1)',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
   },
   dayTitleContainer: {
     flexDirection: 'row',
@@ -303,6 +527,13 @@ const styles = StyleSheet.create({
     color: '#f1f5f9',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  dayTitleInput: {
+    color: '#f1f5f9',
+    fontSize: 16,
+    fontWeight: 'bold',
+    flex: 1,
+    padding: 0,
   },
   deleteButton: {
     padding: 8,
@@ -317,11 +548,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: 'rgba(18, 20, 10, 0.5)',
+    backgroundColor: 'rgba(18, 20, 10, 0.9)', // More opaque for dropdown readability
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(204, 255, 0, 0.1)',
+    position: 'relative',
   },
   exerciseImageContainer: {
     width: 48,
@@ -371,6 +603,7 @@ const styles = StyleSheet.create({
     right: 0,
     padding: 16,
     paddingTop: 40,
+    zIndex: 2000,
   },
   bottomActions: {
     flexDirection: 'row',
@@ -411,4 +644,83 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
+  inputRow: {
+    flexDirection: 'row',
+    marginBottom: 16,
+  },
+  setsRepsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    gap: 8,
+  },
+  setRepInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  setRepInput: {
+    color: '#f1f5f9',
+    fontSize: 14,
+    fontWeight: 'bold',
+    width: 24,
+    textAlign: 'center',
+    padding: 0,
+  },
+  setRepLabel: {
+    color: '#94a3b8',
+    fontSize: 12,
+    marginLeft: 4,
+  },
+  xDivider: {
+    color: '#64748b',
+    fontSize: 14,
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    right: 0,
+    top: 36, // Slightly lower to not overlap with button
+    backgroundColor: '#1d2012',
+    borderRadius: 12, // More rounded
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    width: 150, // Slightly wider
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 }, // Deeper shadow
+    shadowOpacity: 0.5, // Darker shadow
+    shadowRadius: 12,
+    elevation: 10,
+    zIndex: 2000,
+    paddingVertical: 4, // Add vertical padding
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12, // More gap
+    paddingVertical: 14, // Taller touch area
+    paddingHorizontal: 16,
+  },
+  dropdownText: {
+    color: '#f1f5f9',
+    fontSize: 15, // Larger text
+    fontWeight: '500',
+  },
+  dropdownDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginHorizontal: 8, // Inset divider
+  },
+  dropdownOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 900,
+  }
 });

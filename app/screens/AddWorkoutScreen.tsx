@@ -42,7 +42,8 @@ export default function AddWorkoutScreen() {
   const [categoryList, setCategoryList] = useState(categories);
 
   useEffect(() => {
-    const unsubscribe = firestore()
+    // Fetch system workouts
+    const unsubscribeSystem = firestore()
       .collection('workout_programs')
       .onSnapshot(querySnapshot => {
         const workoutsData: Workout[] = [];
@@ -65,33 +66,57 @@ export default function AddWorkoutScreen() {
             id: documentSnapshot.id,
             title: data.name || 'Untitled Workout',
             duration: data.duration || '0 mins',
-            exercises: data.exercises ? data.exercises.length : 0, // Assuming exercises is an array, or default to 0
+            exercises: data.exercises ? data.exercises.length : 0, 
             level: data.level || 'General',
             levelColor: levelColor,
-            image: data.coverImage || 'https://via.placeholder.com/300', // Default placeholder
-            category: data.workout_type_name || 'General', // Use workout_type_name as category
+            image: data.coverImage || 'https://via.placeholder.com/300', 
+            category: data.workout_type_name || 'General', 
           });
         });
 
-        // Update category list dynamically
-        const newCategories = [
-          { id: 'all', label: 'All' },
-          ...Array.from(fetchedCategories).map(cat => ({
-            id: cat,
-            label: cat
-          }))
-        ];
-        
-        setCategoryList(newCategories);
-        setWorkouts(workoutsData);
-        setLoading(false);
+        // Also fetch custom saved workouts
+        const userId = 'current-user-id'; // Replace with actual auth
+        firestore()
+          .collection('saved_workouts')
+          .where('userId', '==', userId)
+          .where('isCustom', '==', true)
+          .get()
+          .then(customSnapshot => {
+            customSnapshot.forEach(doc => {
+              const data = doc.data();
+              workoutsData.push({
+                id: doc.id,
+                title: data.title || 'Custom Workout',
+                duration: data.duration ? `${data.duration} mins` : '0 mins',
+                exercises: data.exerciseCount || 0,
+                level: 'Custom',
+                levelColor: '#a855f7', // Purple for custom
+                image: data.image || 'https://via.placeholder.com/300',
+                category: 'Custom'
+              });
+              fetchedCategories.add('Custom');
+            });
+
+            // Update state
+            const newCategories = [
+              { id: 'all', label: 'All' },
+              ...Array.from(fetchedCategories).map(cat => ({
+                id: cat,
+                label: cat
+              }))
+            ];
+            
+            setCategoryList(newCategories);
+            setWorkouts(workoutsData);
+            setLoading(false);
+          });
+
       }, error => {
         console.error("Error fetching workouts: ", error);
         setLoading(false);
       });
 
-    // Unsubscribe from events when no longer in use
-    return () => unsubscribe();
+    return () => unsubscribeSystem();
   }, []);
 
   const handleAddWorkout = (workoutId: string) => {

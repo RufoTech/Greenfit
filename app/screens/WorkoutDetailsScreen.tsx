@@ -48,87 +48,140 @@ interface WorkoutDetails {
 
 export default function WorkoutDetailsScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams();
+  const { id, isCustom } = useLocalSearchParams();
   const [workout, setWorkout] = useState<WorkoutDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSaved, setIsSaved] = useState(false);
+  const [savedDocId, setSavedDocId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
 
+    // Check if workout is already saved for current user (mocked ID for now)
+    const userId = 'current-user-id'; // Replace with actual auth logic
+
+    const checkSavedStatus = async () => {
+       try {
+         const snapshot = await firestore()
+           .collection('saved_workouts')
+           .where('originalId', '==', String(id))
+           .where('userId', '==', userId)
+           .limit(1)
+           .get();
+
+         if (!snapshot.empty) {
+            setIsSaved(true);
+            setSavedDocId(snapshot.docs[0].id);
+         } else {
+            setIsSaved(false);
+            setSavedDocId(null);
+         }
+       } catch (err) {
+         console.error("Error checking saved status:", err);
+       }
+    };
+
     const fetchWorkoutDetails = async () => {
       try {
-        const workoutDoc = await firestore().collection('workout_programs').doc(String(id)).get();
-        
-        if (workoutDoc.exists) {
-          const data = workoutDoc.data();
-          
-          // Process exercises array
-          const exercisePromises = (data?.exercises || []).map(async (exercise: any, index: number) => {
-             let imageUrl = 'https://via.placeholder.com/150';
-             let videoUrl = '';
-             let targetMuscleImage = '';
-             let muscleNames: string[] = [];
-             let instructions = '';
-             
-             try {
-                // Fetch image from 'workouts' collection based on exercise name
-                // Note: Assuming 'name' field in 'workouts' collection matches the exercise name
-                const workoutQuery = await firestore()
-                  .collection('workouts')
-                  .where('name', '==', exercise.name)
-                  .limit(1)
-                  .get();
+        let data: any;
+        let docId = String(id);
+
+        if (isCustom === 'true') {
+            const customDoc = await firestore().collection('saved_workouts').doc(docId).get();
+            if (customDoc.exists) {
+                data = customDoc.data();
                 
-                if (!workoutQuery.empty) {
-                   const workoutData = workoutQuery.docs[0].data();
-                   imageUrl = workoutData.mainImage || workoutData.imageUrl || imageUrl;
-                   videoUrl = workoutData.videoUrl || '';
-                   instructions = workoutData.instructions || '';
-                   
-                   if (workoutData.muscleGroups && Array.isArray(workoutData.muscleGroups)) {
-                      if (workoutData.muscleGroups.length > 0) {
-                          targetMuscleImage = workoutData.muscleGroups[0].imageUrl || '';
-                      }
-                      muscleNames = workoutData.muscleGroups.map((mg: any) => mg.name).filter(Boolean);
-                   }
-                }
-             } catch (err) {
-                console.log(`Error fetching image for exercise ${exercise.name}:`, err);
-             }
+                // Map custom exercises to component format
+                const exercisesData = (data.exercises || []).map((ex: any, index: number) => ({
+                    id: ex.id || `ex-${index}`,
+                    name: ex.name,
+                    sets: ex.sets,
+                    reps: ex.reps,
+                    image: ex.mainImage || 'https://via.placeholder.com/150',
+                    category: ex.type || 'General',
+                    // Add other fields if needed
+                }));
 
-             return {
-               id: `ex-${index}`,
-               name: exercise.name || 'Unknown Exercise',
-               sets: exercise.sets || '0',
-               reps: exercise.reps || '0',
-               category: exercise.category,
-               image: imageUrl,
-               muscles: muscleNames,
-               videoUrl,
-               targetMuscleImage,
-               muscleNames,
-               instructions
-             };
-          });
-
-          const exercisesData = await Promise.all(exercisePromises);
-
-          // Parse equipment and target arrays
-          const equipment = Array.isArray(data?.equipment) ? data.equipment.join(', ') : (data?.equipment || 'None');
-          const target = Array.isArray(data?.targetMuscles) ? data.targetMuscles.join(', ') : (data?.targetMuscles || 'General');
-
-          setWorkout({
-            id: workoutDoc.id,
-            title: data?.name || 'Untitled Workout',
-            level: data?.level || 'General',
-            duration: data?.duration || '0 min',
-            equipment: equipment,
-            target: target,
-            image: data?.coverImage || 'https://via.placeholder.com/300',
-            exercises: exercisesData
-          });
+                setWorkout({
+                    id: customDoc.id,
+                    title: data.title,
+                    level: data.level,
+                    duration: data.duration, // Already includes 'min' or we append it
+                    equipment: data.equipment,
+                    target: data.target,
+                    image: data.image,
+                    exercises: exercisesData
+                });
+            }
         } else {
-            console.log("Workout document does not exist");
+            const workoutDoc = await firestore().collection('workout_programs').doc(docId).get();
+            if (workoutDoc.exists) {
+              data = workoutDoc.data();
+              // ... existing logic for system workouts ...
+              // Process exercises array
+              const exercisePromises = (data?.exercises || []).map(async (exercise: any, index: number) => {
+                 let imageUrl = 'https://via.placeholder.com/150';
+                 let videoUrl = '';
+                 let targetMuscleImage = '';
+                 let muscleNames: string[] = [];
+                 let instructions = '';
+                 
+                 try {
+                    const workoutQuery = await firestore()
+                      .collection('workouts')
+                      .where('name', '==', exercise.name)
+                      .limit(1)
+                      .get();
+                    
+                    if (!workoutQuery.empty) {
+                       const workoutData = workoutQuery.docs[0].data();
+                       imageUrl = workoutData.mainImage || workoutData.imageUrl || imageUrl;
+                       videoUrl = workoutData.videoUrl || '';
+                       instructions = workoutData.instructions || '';
+                       
+                       if (workoutData.muscleGroups && Array.isArray(workoutData.muscleGroups)) {
+                          if (workoutData.muscleGroups.length > 0) {
+                              targetMuscleImage = workoutData.muscleGroups[0].imageUrl || '';
+                          }
+                          muscleNames = workoutData.muscleGroups.map((mg: any) => mg.name).filter(Boolean);
+                       }
+                    }
+                 } catch (err) {
+                    console.log(`Error fetching image for exercise ${exercise.name}:`, err);
+                 }
+    
+                 return {
+                   id: `ex-${index}`,
+                   name: exercise.name || 'Unknown Exercise',
+                   sets: exercise.sets || '0',
+                   reps: exercise.reps || '0',
+                   category: exercise.category,
+                   image: imageUrl,
+                   muscles: muscleNames,
+                   videoUrl,
+                   targetMuscleImage,
+                   muscleNames,
+                   instructions
+                 };
+              });
+    
+              const exercisesData = await Promise.all(exercisePromises);
+    
+              // Parse equipment and target arrays
+              const equipment = Array.isArray(data?.equipment) ? data.equipment.join(', ') : (data?.equipment || 'None');
+              const target = Array.isArray(data?.targetMuscles) ? data.targetMuscles.join(', ') : (data?.targetMuscles || 'General');
+    
+              setWorkout({
+                id: workoutDoc.id,
+                title: data?.name || 'Untitled Workout',
+                level: data?.level || 'General',
+                duration: data?.duration || '0 min',
+                equipment: equipment,
+                target: target,
+                image: data?.coverImage || 'https://via.placeholder.com/300',
+                exercises: exercisesData
+              });
+            }
         }
       } catch (error) {
         console.error("Error fetching workout details:", error);
@@ -137,8 +190,47 @@ export default function WorkoutDetailsScreen() {
       }
     };
 
+    checkSavedStatus();
     fetchWorkoutDetails();
-  }, [id]);
+  }, [id, isCustom]);
+
+  const handleToggleLibrary = async () => {
+    if (!workout) return;
+
+    // Use current user ID (mocked for now)
+    const userId = 'current-user-id';
+
+    try {
+      if (isSaved && savedDocId) {
+        // Remove from library
+        await firestore().collection('saved_workouts').doc(savedDocId).delete();
+        setIsSaved(false);
+        setSavedDocId(null);
+        alert('Workout removed from library!');
+      } else {
+        // Save to library with userId
+        const savedWorkout = {
+            userId: userId, // Associate with user
+            originalId: id,
+            title: workout.title,
+            level: workout.level,
+            target: workout.target,
+            exerciseCount: workout.exercises.length,
+            duration: workout.duration.replace(' min', ''),
+            image: workout.image,
+            savedAt: firestore.FieldValue.serverTimestamp(),
+        };
+
+        const docRef = await firestore().collection('saved_workouts').add(savedWorkout);
+        setIsSaved(true);
+        setSavedDocId(docRef.id);
+        alert('Workout saved to library!');
+      }
+    } catch (error) {
+      console.error("Error toggling library status:", error);
+      alert('Operation failed.');
+    }
+  };
 
   if (loading) {
     return (
@@ -204,8 +296,13 @@ export default function WorkoutDetailsScreen() {
           <TouchableOpacity style={styles.addToDayButton}>
             <Text style={styles.addToDayText}>Add to Day</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.saveToLibraryButton}>
-            <Text style={styles.saveToLibraryText}>Save to Library</Text>
+          <TouchableOpacity 
+            style={[styles.saveToLibraryButton, isSaved && styles.savedButton]}
+            onPress={handleToggleLibrary}
+          >
+            <Text style={[styles.saveToLibraryText, isSaved && styles.savedButtonText]}>
+                {isSaved ? 'Remove from Library' : 'Save to Library'}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -366,6 +463,13 @@ const styles = StyleSheet.create({
     color: '#ccff00',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  savedButton: {
+    backgroundColor: '#ccff00',
+    borderWidth: 0,
+  },
+  savedButtonText: {
+    color: '#1f230f',
   },
   summaryContainer: {
     flexDirection: 'row',
