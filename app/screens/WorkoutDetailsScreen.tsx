@@ -241,7 +241,7 @@ export default function WorkoutDetailsScreen() {
             {workout.exercises.map((exercise, index) => (
               <TouchableOpacity 
                 key={exercise.id} 
-                style={[styles.exerciseItem, index === workout.exercises.length - 1 && styles.lastItem]}
+                style={styles.exerciseItem}
                 onPress={() => router.push({
                   pathname: '/screens/ExerciseDetailScreen',
                   params: {
@@ -433,9 +433,6 @@ const styles = StyleSheet.create({
     marginBottom: 8, // Add spacing between items
     borderWidth: 1,
     borderColor: 'rgba(204, 255, 0, 0.1)', // Subtle green border
-  },
-  lastItem: {
-    opacity: 0.6,
   },
   exerciseImageContainer: {
     width: 80,
