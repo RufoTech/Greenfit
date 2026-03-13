@@ -157,7 +157,8 @@ export default function CreateCustomWorkoutScreen() {
     try {
       const userId = 'current-user-id'; // In real app, get from Auth context
       
-      await firestore().collection('saved_workouts').add({
+      // Save to new customUserWorkouts collection as requested
+      await firestore().collection('customUserWorkouts').add({
         userId,
         title: programName,
         level: level || 'Custom', 
@@ -167,10 +168,13 @@ export default function CreateCustomWorkoutScreen() {
         duration: duration || `${exercises.length * 5}`, 
         image: coverImage || 'https://via.placeholder.com/300', 
         exercises: exercises,
-        savedAt: firestore.FieldValue.serverTimestamp(),
+        createdAt: firestore.FieldValue.serverTimestamp(),
         isCustom: true
       });
 
+      // Keep saving to saved_workouts if needed for library, or remove if redundancy is not wanted.
+      // For now, I will remove saving to 'saved_workouts' to strictly follow the new instruction about 'customUserWorkouts'.
+      
       Alert.alert("Success", "Program created successfully!", [
         { text: "OK", onPress: () => router.back() }
       ]);

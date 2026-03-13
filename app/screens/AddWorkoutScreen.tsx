@@ -74,12 +74,11 @@ export default function AddWorkoutScreen() {
           });
         });
 
-        // Also fetch custom saved workouts
+        // Also fetch custom user workouts
         const userId = 'current-user-id'; // Replace with actual auth
         firestore()
-          .collection('saved_workouts')
+          .collection('customUserWorkouts')
           .where('userId', '==', userId)
-          .where('isCustom', '==', true)
           .get()
           .then(customSnapshot => {
             customSnapshot.forEach(doc => {
@@ -87,9 +86,9 @@ export default function AddWorkoutScreen() {
               workoutsData.push({
                 id: doc.id,
                 title: data.title || 'Custom Workout',
-                duration: data.duration ? `${data.duration} mins` : '0 mins',
+                duration: data.duration ? (data.duration.includes('min') ? data.duration : `${data.duration} mins`) : '0 mins',
                 exercises: data.exerciseCount || 0,
-                level: 'Custom',
+                level: data.level || 'Custom',
                 levelColor: '#a855f7', // Purple for custom
                 image: data.image || 'https://via.placeholder.com/300',
                 category: 'Custom'
@@ -225,7 +224,10 @@ export default function AddWorkoutScreen() {
               style={styles.card}
               onPress={() => router.push({
                 pathname: '/screens/WorkoutDetailsScreen',
-                params: { id: workout.id }
+                params: { 
+                  id: workout.id,
+                  isCustom: workout.category === 'Custom' ? 'true' : 'false'
+                }
               })}
             >
               <ImageBackground

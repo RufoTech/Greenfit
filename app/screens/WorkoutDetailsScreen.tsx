@@ -87,33 +87,34 @@ export default function WorkoutDetailsScreen() {
         let docId = String(id);
 
         if (isCustom === 'true') {
-            const customDoc = await firestore().collection('saved_workouts').doc(docId).get();
-            if (customDoc.exists) {
-                data = customDoc.data();
-                
-                // Map custom exercises to component format
-                const exercisesData = (data.exercises || []).map((ex: any, index: number) => ({
-                    id: ex.id || `ex-${index}`,
-                    name: ex.name,
-                    sets: ex.sets,
-                    reps: ex.reps,
-                    image: ex.mainImage || 'https://via.placeholder.com/150',
-                    category: ex.type || 'General',
-                    // Add other fields if needed
-                }));
+             // Fetch from customUserWorkouts collection
+             const customDoc = await firestore().collection('customUserWorkouts').doc(docId).get();
+             if (customDoc.exists) {
+                 data = customDoc.data();
+                 
+                 // Map custom exercises to component format
+                 const exercisesData = (data.exercises || []).map((ex: any, index: number) => ({
+                     id: ex.id || `ex-${index}`,
+                     name: ex.name,
+                     sets: ex.sets,
+                     reps: ex.reps,
+                     image: ex.mainImage || 'https://via.placeholder.com/150',
+                     category: ex.type || 'General',
+                     // Add other fields if needed
+                 }));
 
-                setWorkout({
-                    id: customDoc.id,
-                    title: data.title,
-                    level: data.level,
-                    duration: data.duration, // Already includes 'min' or we append it
-                    equipment: data.equipment,
-                    target: data.target,
-                    image: data.image,
-                    exercises: exercisesData
-                });
-            }
-        } else {
+                 setWorkout({
+                     id: customDoc.id,
+                     title: data.title,
+                     level: data.level,
+                     duration: data.duration.includes('min') ? data.duration : `${data.duration} min`, 
+                     equipment: data.equipment,
+                     target: data.target,
+                     image: data.image,
+                     exercises: exercisesData
+                 });
+             }
+         } else {
             const workoutDoc = await firestore().collection('workout_programs').doc(docId).get();
             if (workoutDoc.exists) {
               data = workoutDoc.data();
