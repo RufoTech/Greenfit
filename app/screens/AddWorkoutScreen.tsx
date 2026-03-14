@@ -15,10 +15,11 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+import { useCallback } from 'react';
 
 // Define Workout interface
 interface Workout {
@@ -44,77 +45,80 @@ export default function AddWorkoutScreen() {
   const [loading, setLoading] = useState(true);
   const [categoryList, setCategoryList] = useState(categories);
 
-  useEffect(() => {
-    // Fetch system workouts
-    const unsubscribeSystem = firestore()
-      .collection('workout_programs')
-      .onSnapshot(querySnapshot => {
-        const workoutsData: Workout[] = [];
-        const fetchedCategories = new Set<string>();
-        
-        querySnapshot.forEach(documentSnapshot => {
-          const data = documentSnapshot.data();
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      // Fetch system workouts
+      const unsubscribeSystem = firestore()
+        .collection('workout_programs')
+        .onSnapshot(querySnapshot => {
+          const workoutsData: Workout[] = [];
+          const fetchedCategories = new Set<string>();
           
-          // Map level color based on level text
-          let levelColor = '#ccff00'; // Default Green
-          const levelLower = (data.level || '').toLowerCase();
-          if (levelLower.includes('beginner')) levelColor = '#3b82f6'; // Blue
-          else if (levelLower.includes('advanced')) levelColor = '#ef4444'; // Red
-          
-          if (data.workout_type_name) {
-            fetchedCategories.add(data.workout_type_name);
+          querySnapshot.forEach(documentSnapshot => {
+            const data = documentSnapshot.data();
+            
+            // Map level color based on level text
+            let levelColor = '#ccff00'; // Default Green
+            const levelLower = (data.level || '').toLowerCase();
+            if (levelLower.includes('beginner')) levelColor = '#3b82f6'; // Blue
+            else if (levelLower.includes('advanced')) levelColor = '#ef4444'; // Red
+            
+            if (data.workout_type_name) {
+              fetchedCategories.add(data.workout_type_name);
+            }
+
+            workoutsData.push({
+              id: documentSnapshot.id,
+              title: data.name || 'Untitled Workout',
+              duration: data.duration || '0 mins',
+              exercises: data.exercises ? data.exercises.length : 0, 
+              level: data.level || 'General',
+              levelColor: levelColor,
+              image: data.coverImage || 'https://via.placeholder.com/300', 
+              category: data.workout_type_name || 'General', 
+            });
+          });
+
+          // Also fetch custom user workouts
+          const user = auth().currentUser;
+          if (user) {
+            firestore()
+              .collection('customUserWorkouts')
+              .where('userId', '==', user.uid)
+              .get()
+              .then(customSnapshot => {
+                customSnapshot.forEach(doc => {
+                  const data = doc.data();
+                  workoutsData.push({
+                    id: doc.id,
+                    title: data.title || 'Custom Workout',
+                    duration: data.duration ? (data.duration.includes('min') ? data.duration : `${data.duration} mins`) : '0 mins',
+                    exercises: data.exerciseCount || 0,
+                    level: data.level || 'Custom',
+                    levelColor: '#a855f7', // Purple for custom
+                    image: data.image || 'https://via.placeholder.com/300',
+                    category: 'Custom'
+                  });
+                  fetchedCategories.add('Custom');
+                });
+    
+                // Update state
+                updateWorkoutsState(fetchedCategories, workoutsData);
+              });
+          } else {
+              // Update state even if no user, just with system workouts
+              updateWorkoutsState(fetchedCategories, workoutsData);
           }
 
-          workoutsData.push({
-            id: documentSnapshot.id,
-            title: data.name || 'Untitled Workout',
-            duration: data.duration || '0 mins',
-            exercises: data.exercises ? data.exercises.length : 0, 
-            level: data.level || 'General',
-            levelColor: levelColor,
-            image: data.coverImage || 'https://via.placeholder.com/300', 
-            category: data.workout_type_name || 'General', 
-          });
+        }, error => {
+          console.error("Error fetching workouts: ", error);
+          setLoading(false);
         });
 
-        // Also fetch custom user workouts
-        const user = auth().currentUser;
-        if (user) {
-          firestore()
-            .collection('customUserWorkouts')
-            .where('userId', '==', user.uid)
-            .get()
-            .then(customSnapshot => {
-              customSnapshot.forEach(doc => {
-                const data = doc.data();
-                workoutsData.push({
-                  id: doc.id,
-                  title: data.title || 'Custom Workout',
-                  duration: data.duration ? (data.duration.includes('min') ? data.duration : `${data.duration} mins`) : '0 mins',
-                  exercises: data.exerciseCount || 0,
-                  level: data.level || 'Custom',
-                  levelColor: '#a855f7', // Purple for custom
-                  image: data.image || 'https://via.placeholder.com/300',
-                  category: 'Custom'
-                });
-                fetchedCategories.add('Custom');
-              });
-  
-              // Update state
-              updateWorkoutsState(fetchedCategories, workoutsData);
-            });
-        } else {
-            // Update state even if no user, just with system workouts
-            updateWorkoutsState(fetchedCategories, workoutsData);
-        }
-
-      }, error => {
-        console.error("Error fetching workouts: ", error);
-        setLoading(false);
-      });
-
-    return () => unsubscribeSystem();
-  }, []);
+      return () => unsubscribeSystem();
+    }, [])
+  );
 
   const updateWorkoutsState = (fetchedCategories: Set<string>, workoutsData: Workout[]) => {
     const newCategories = [
