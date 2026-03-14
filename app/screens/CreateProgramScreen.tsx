@@ -1,5 +1,6 @@
 import { Feather, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { SelectionStore } from '../utils/SelectionStore';
 import React, { useState } from 'react';
 import {
   Image,
@@ -27,14 +28,7 @@ export default function CreateProgramScreen() {
 
   // Initial workout data structure - organized by weeks
   const [workoutsByWeek, setWorkoutsByWeek] = useState({
-    1: [
-      { id: 1, type: 'workout', title: 'Upper Body Power', subtitle: '6 exercises • 45 mins', day: 1, images: [
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuAKbZKbErvtnWKLTiLQvWfArW6zewG6Q0u6fVG0SUBeou_58u_qlral7NRqIbTQ_PquUqZrFJKq8gIyS7sWK5-_vpSfOFgVuaT4DIEg8A9KQNz_XkpV0klfrHSRdsnSXY-O9iqs2srKUNLLay-cJU_njfGGtfSMLeubiwB2kSxP7vUx8vKMSRFDoZKYfGiZuVdjjWkm9YJSZAY-mi0EUe7xMzpmsFP10hMFU0sDP6zpxUOdUKwu9T8jQAIxr3kcYtJB6ONu3RM_M4s',
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuCl_YOPa2bbx2UJQk9yWuVc3ATdJm8rJe1vfrKGTuYbsOE5xVoXItSm7heq6-lm2u1NwPDHVX9OWzQ97GeoMxcJ7lCyt21sZgdRAIpx5vang-sfgQ0O9SbeQ2MBNzfe9nAfhnUJaUlzO2bOdrRDcmyJGGfPTEu5xDylyBURFqONGInaBld7b9aZ1D3Nyr78dq5l9n_TtC8891YFkFXv4Lky3TJrAO_sdbQofrFZZJHoHP4X_yI11AgYbr1DNYxepiN0lra2vESZvSY'
-      ], extraCount: 4 },
-      { id: 2, type: 'workout', title: 'Lower Body Strength', subtitle: '5 exercises • 55 mins', day: 2, images: [], extraCount: 0 },
-      { id: 3, type: 'rest', title: 'Active Rest Day', subtitle: '', day: 3, images: [], extraCount: 0 },
-    ],
+    1: [],
     2: [],
     3: [],
     4: []
@@ -43,7 +37,37 @@ export default function CreateProgramScreen() {
   // Get current week's workouts
   const currentWorkouts = workoutsByWeek[selectedWeek] || [];
 
-  // Focus Options matching HTML icons
+  useFocusEffect(
+    React.useCallback(() => {
+      const { data, action, targetId } = SelectionStore.getData();
+      
+      if (data && action === 'add' && targetId === 'program_workout') {
+        SelectionStore.clear();
+
+        setWorkoutsByWeek(prev => {
+          const currentWeekWorkouts = prev[selectedWeek] ? [...prev[selectedWeek]] : [];
+          const nextDay = currentWeekWorkouts.length + 1;
+          
+          const newWorkout = { 
+            id: Date.now() + Math.random(), 
+            type: 'workout', 
+            title: data.title, 
+            subtitle: data.subtitle, 
+            day: nextDay, 
+            images: data.images || [], 
+            extraCount: data.extraCount || 0 
+          };
+
+          currentWeekWorkouts.push(newWorkout);
+
+          return {
+            ...prev,
+            [selectedWeek]: currentWeekWorkouts
+          };
+        });
+      }
+    }, [selectedWeek])
+  );
   const focusOptions = [
     { id: 'Gain Muscle', icon: 'fitness-center', iconLib: MaterialIcons, label: 'Gain Muscle' }, // exercise -> fitness-center (closest)
     { id: 'Lose Weight', icon: 'scale', iconLib: MaterialCommunityIcons, label: 'Lose Weight' }, // scale -> scale (MCI)
@@ -72,20 +96,12 @@ export default function CreateProgramScreen() {
       return;
     }
 
-    const nextDay = currentWorkouts.length + 1;
-    const newWorkout = { 
-      id: Date.now(), 
-      type: 'workout', 
-      title: 'New Workout', 
-      subtitle: '0 exercises • 0 mins', 
-      day: nextDay, 
-      images: [], 
-      extraCount: 0 
-    };
-
-    setWorkoutsByWeek({
-      ...workoutsByWeek,
-      [selectedWeek]: [...currentWorkouts, newWorkout]
+    router.push({
+      pathname: '/screens/AddWorkoutScreen',
+      params: { 
+        selectionMode: 'true',
+        returnTo: '/screens/CreateProgramScreen'
+      }
     });
   };
 

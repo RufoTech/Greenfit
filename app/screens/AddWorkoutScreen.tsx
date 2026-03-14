@@ -15,11 +15,12 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { useCallback } from 'react';
+import { SelectionStore } from '../utils/SelectionStore';
 
 // Define Workout interface
 interface Workout {
@@ -40,6 +41,7 @@ const categories = [
 
 export default function AddWorkoutScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [workouts, setWorkouts] = useState<Workout[]>([]);
@@ -137,10 +139,24 @@ export default function AddWorkoutScreen() {
     setLoading(false);
   };
 
-  const handleAddWorkout = (workoutId: string) => {
-    // Logic to add workout to the program would go here
-    // For now, just go back
-    router.back();
+  const handleAddWorkout = (workout: Workout) => {
+    if (params.selectionMode === 'true') {
+      SelectionStore.setData(
+        {
+          id: workout.id,
+          title: workout.title,
+          subtitle: `${workout.exercises} exercises • ${workout.duration} Min`,
+          images: [workout.image],
+          extraCount: 0,
+        },
+        'add',
+        'program_workout'
+      );
+      router.back();
+    } else {
+        // Default behavior (if any)
+        router.back();
+    }
   };
 
   const handleDeleteCustomWorkout = async (workoutId: string, event: any) => {
@@ -326,7 +342,7 @@ export default function AddWorkoutScreen() {
                 </View>
                 <TouchableOpacity 
                   style={styles.addButton}
-                  onPress={() => handleAddWorkout(workout.id)}
+                  onPress={() => handleAddWorkout(workout)}
                 >
                   <MaterialIcons name="add" size={24} color="#1f230f" />
                 </TouchableOpacity>
