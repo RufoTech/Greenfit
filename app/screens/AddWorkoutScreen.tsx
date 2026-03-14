@@ -283,72 +283,142 @@ export default function AddWorkoutScreen() {
         {loading ? (
           <ActivityIndicator size="large" color="#ccff00" style={{ marginTop: 20 }} />
         ) : (
-          filteredWorkouts.map((workout) => (
-            <TouchableOpacity 
-              key={workout.id} 
-              activeOpacity={0.9}
-              style={styles.card}
-              onPress={() => router.push({
-                pathname: '/screens/WorkoutDetailsScreen',
-                params: { 
-                  id: workout.id,
-                  isCustom: workout.category === 'Custom' ? 'true' : 'false'
-                }
-              })}
-            >
-              <ImageBackground
-                source={{ uri: workout.image }}
-                style={styles.cardImage}
-                imageStyle={{ borderRadius: 16 }}
-              >
-                <LinearGradient
-                  colors={['transparent', 'rgba(0,0,0,0.8)']}
-                  style={styles.cardOverlay}
-                />
-                <View style={[styles.levelBadge, { backgroundColor: workout.levelColor }]}>
-                  <Text style={styles.levelText}>{workout.level}</Text>
-                </View>
+          filteredWorkouts.map((workout) => {
+            const isNoImage = workout.category === 'Custom' && (!workout.image || workout.image === 'https://via.placeholder.com/300');
 
-                {/* Delete Button for Custom Workouts */}
-                {workout.category === 'Custom' && (
-                  <TouchableOpacity 
-                    style={styles.deleteButton}
-                    onPress={(e) => handleDeleteCustomWorkout(workout.id, e)}
-                  >
-                    <MaterialIcons name="delete" size={20} color="#ef4444" />
-                  </TouchableOpacity>
-                )}
-              </ImageBackground>
-              
-              <View style={styles.cardFooter}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cardTitle}>{workout.title}</Text>
-                  <View style={styles.metaRow}>
-                    <View style={styles.metaItem}>
-                      <MaterialIcons name="schedule" size={14} color="#ccff00" />
-                      <Text style={styles.metaText}>{workout.duration} Min</Text>
+            if (isNoImage) {
+              return (
+                <TouchableOpacity 
+                  key={workout.id} 
+                  activeOpacity={0.9}
+                  style={styles.noImageCard}
+                  onPress={() => router.push({
+                    pathname: '/screens/WorkoutDetailsScreen',
+                    params: { 
+                      id: workout.id,
+                      isCustom: workout.category === 'Custom' ? 'true' : 'false'
+                    }
+                  })}
+                >
+                  {/* Header Section */}
+                  <View style={styles.noImageHeader}>
+                    <View style={styles.noImageHeaderLeft}>
+                      <Text style={[styles.noImageLevelText, { color: workout.levelColor || '#ccff00' }]}>
+                        {workout.level}
+                      </Text>
+                      <Text style={styles.noImageTitle}>{workout.title}</Text>
                     </View>
-                    <Text style={styles.metaDot}>•</Text>
-                    <View style={styles.metaItem}>
-                      <MaterialIcons name="fitness-center" size={14} color="#ccff00" />
-                      <Text style={styles.metaText}>{workout.exercises} exercises</Text>
+                    {workout.category === 'Custom' && (
+                      <TouchableOpacity 
+                        style={styles.noImageDeleteButton}
+                        onPress={(e) => handleDeleteCustomWorkout(workout.id, e)}
+                      >
+                        <MaterialIcons name="delete" size={20} color="#ef4444" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {/* Details Section */}
+                  <View style={styles.noImageDetailsRow}>
+                    <View style={styles.noImageDetailItem}>
+                      <MaterialIcons name="fitness-center" size={16} color="#ccff00" />
+                      <Text style={styles.noImageDetailText}>{workout.targetMuscle || 'Full Body'}</Text>
                     </View>
-                    <Text style={styles.metaDot}>•</Text>
-                    <View style={styles.metaItem}>
-                      <MaterialIcons name="accessibility" size={14} color="#ccff00" />
-                      <Text style={styles.metaText}>{workout.targetMuscle || 'Full Body'}</Text>
+                    <View style={styles.noImageDetailItem}>
+                      <MaterialIcons name="schedule" size={16} color="#ccff00" />
+                      <Text style={styles.noImageDetailText}>{workout.duration} mins</Text>
+                    </View>
+                    <View style={styles.noImageDetailItem}>
+                      <MaterialIcons name="list-alt" size={16} color="#ccff00" />
+                      <Text style={styles.noImageDetailText}>{workout.exercises} Exercises</Text>
                     </View>
                   </View>
-                </View>
-                <TouchableOpacity 
-                  style={styles.addButton}
-                  onPress={() => handleAddWorkout(workout)}
-                >
-                  <MaterialIcons name="add" size={24} color="#1f230f" />
+                  
+                  <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: -10 }}>
+                     <TouchableOpacity 
+                      style={styles.addButton}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleAddWorkout(workout);
+                      }}
+                    >
+                      <MaterialIcons name="add" size={24} color="#1f230f" />
+                    </TouchableOpacity>
+                  </View>
                 </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          ))
+              );
+            }
+
+            return (
+              <TouchableOpacity 
+                key={workout.id} 
+                activeOpacity={0.9}
+                style={styles.card}
+                onPress={() => router.push({
+                  pathname: '/screens/WorkoutDetailsScreen',
+                  params: { 
+                    id: workout.id,
+                    isCustom: workout.category === 'Custom' ? 'true' : 'false'
+                  }
+                })}
+              >
+                <ImageBackground
+                  source={{ uri: workout.image }}
+                  style={styles.cardImage}
+                  imageStyle={{ borderRadius: 16 }}
+                >
+                  <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.8)']}
+                    style={styles.cardOverlay}
+                  />
+                  <View style={[styles.levelBadge, { backgroundColor: workout.levelColor }]}>
+                    <Text style={styles.levelText}>{workout.level}</Text>
+                  </View>
+
+                  {/* Delete Button for Custom Workouts */}
+                  {workout.category === 'Custom' && (
+                    <TouchableOpacity 
+                      style={styles.deleteButton}
+                      onPress={(e) => handleDeleteCustomWorkout(workout.id, e)}
+                    >
+                      <MaterialIcons name="delete" size={20} color="#ef4444" />
+                    </TouchableOpacity>
+                  )}
+                </ImageBackground>
+                
+                <View style={styles.cardFooter}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardTitle}>{workout.title}</Text>
+                    <View style={styles.metaRow}>
+                      <View style={styles.metaItem}>
+                        <MaterialIcons name="schedule" size={14} color="#ccff00" />
+                        <Text style={styles.metaText}>{workout.duration} Min</Text>
+                      </View>
+                      <Text style={styles.metaDot}>•</Text>
+                      <View style={styles.metaItem}>
+                        <MaterialIcons name="fitness-center" size={14} color="#ccff00" />
+                        <Text style={styles.metaText}>{workout.exercises} exercises</Text>
+                      </View>
+                      <Text style={styles.metaDot}>•</Text>
+                      <View style={styles.metaItem}>
+                        <MaterialIcons name="accessibility" size={14} color="#ccff00" />
+                        <Text style={styles.metaText}>{workout.targetMuscle || 'Full Body'}</Text>
+                      </View>
+                    </View>
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.addButton}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleAddWorkout(workout);
+                    }}
+                  >
+                    <MaterialIcons name="add" size={24} color="#1f230f" />
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            );
+          })
         )}
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -569,5 +639,88 @@ const styles = StyleSheet.create({
     backgroundColor: '#ccff00',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  noImageCard: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
+    backgroundColor: '#2a2f16',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  noImageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  noImageHeaderLeft: {
+    flexDirection: 'column',
+    gap: 4,
+  },
+  noImageLevelText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
+  noImageTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#f8fafc',
+    lineHeight: 24,
+  },
+  noImageDeleteButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noImageDetailsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginBottom: 24,
+    columnGap: 16,
+    rowGap: 12,
+  },
+  noImageDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  noImageDetailText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#94a3b8',
+  },
+  noImageActionButton: {
+    width: '100%',
+    backgroundColor: '#ccff00',
+    paddingVertical: 14,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: "#ccff00",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 15,
+    elevation: 4,
+  },
+  noImageActionText: {
+    color: '#12140a',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 });
