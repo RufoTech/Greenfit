@@ -334,7 +334,7 @@ export default function AddWorkoutScreen() {
                     </View>
                   </View>
                   
-                  <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: -10 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: -35 }}>
                      <TouchableOpacity 
                       style={styles.addButton}
                       onPress={(e) => {

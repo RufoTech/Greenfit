@@ -73,6 +73,7 @@ export default function CreateProgramScreen() {
     { id: 'Lose Weight', icon: 'scale', iconLib: MaterialCommunityIcons, label: 'Lose Weight' }, // scale -> scale (MCI)
     { id: 'Get Fitter', icon: 'run', iconLib: MaterialCommunityIcons, label: 'Get Fitter' }, // directions_run -> run (MCI)
     { id: 'Get Stronger', icon: 'dumbbell', iconLib: MaterialCommunityIcons, label: 'Get Stronger' }, // fitness_center -> dumbbell (MCI)
+    { id: 'Custom', icon: 'tune', iconLib: MaterialIcons, label: 'Custom' },
   ];
 
   const theme = {

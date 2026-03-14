@@ -167,8 +167,13 @@ export default function QuickActionsOverlay({ visible, onClose }: QuickActionsOv
               iconName="dashboard" 
               onPress={() => handleActionPress('/screens/FeaturedRoutinesScreen')}
           />
-          {/* Add a dummy view to align the last row elements to the left (start) when using space-between */}
-          <View style={styles.actionButton} />
+          <QuickActionButton 
+              title="Custom exercises" 
+              subtitle="" 
+              IconComponent={MaterialIcons} 
+              iconName="library-add" 
+              onPress={() => handleActionPress('/screens/ExerciseLibraryScreen')}
+          />
         </View>
 
         <View style={styles.closeButtonContainer}>
