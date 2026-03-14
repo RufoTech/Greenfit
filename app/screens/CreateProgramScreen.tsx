@@ -1,7 +1,7 @@
 import { Feather, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SelectionStore } from '../utils/SelectionStore';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Image,
   Platform,
@@ -15,7 +15,9 @@ import {
   View,
   Alert,
   Modal,
+  ActivityIndicator
 } from 'react-native';
+import firestore from '@react-native-firebase/firestore';
 
 export default function CreateProgramScreen() {
   const router = useRouter();
@@ -24,15 +26,107 @@ export default function CreateProgramScreen() {
   const [focus, setFocus] = useState('Gain Muscle');
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [showLimitAlert, setShowLimitAlert] = useState(false);
+  const [loading, setLoading] = useState(false);
   const weeks = [1, 2, 3, 4];
 
   // Initial workout data structure - organized by weeks
-  const [workoutsByWeek, setWorkoutsByWeek] = useState({
+  const [workoutsByWeek, setWorkoutsByWeek] = useState<any>({
     1: [],
     2: [],
     3: [],
     4: []
   });
+
+  // Fetch plans from Firestore when focus changes
+  useEffect(() => {
+    if (focus === 'Custom') {
+      // Reset to empty for Custom
+      setWorkoutsByWeek({
+        1: [],
+        2: [],
+        3: [],
+        4: []
+      });
+      return;
+    }
+
+    const fetchPlan = async () => {
+      setLoading(true);
+      try {
+        const snapshot = await firestore().collection('monthly_plans').get();
+        let foundPlan = null;
+
+        // Find the document that contains the plan for the selected focus
+        for (const doc of snapshot.docs) {
+          const data = doc.data();
+          if (data.plan && data.plan[focus]) {
+            foundPlan = data.plan[focus];
+            break;
+          }
+        }
+
+        if (foundPlan) {
+          const newWorkoutsByWeek: any = { 1: [], 2: [], 3: [], 4: [] };
+
+          Object.keys(foundPlan).forEach(weekKey => {
+            // weekKey e.g., "Week 1"
+            const weekNum = parseInt(weekKey.replace('Week ', ''));
+            if (!isNaN(weekNum) && newWorkoutsByWeek[weekNum] !== undefined) {
+              const weekData = foundPlan[weekKey];
+              const weekWorkouts: any[] = [];
+
+              Object.keys(weekData).forEach(dayKey => {
+                // dayKey e.g., "Day 1"
+                const dayNum = parseInt(dayKey.replace('Day ', ''));
+                if (!isNaN(dayNum)) {
+                  const dayData = weekData[dayKey];
+                  
+                  if (dayData.isRest) {
+                    weekWorkouts.push({
+                      id: Date.now() + Math.random(),
+                      type: 'rest',
+                      title: 'Rest Day',
+                      subtitle: '',
+                      day: dayNum,
+                      images: [],
+                      extraCount: 0
+                    });
+                  } else if (dayData.programs && dayData.programs.length > 0) {
+                    const program = dayData.programs[0]; // Take the first program
+                    weekWorkouts.push({
+                      id: program.id || (Date.now() + Math.random()),
+                      type: 'workout',
+                      title: program.name,
+                      subtitle: `${program.exercises?.length || 0} exercises • ${program.duration || 0} Min`,
+                      day: dayNum,
+                      images: program.coverImage ? [program.coverImage] : [],
+                      extraCount: 0
+                    });
+                  }
+                }
+              });
+
+              // Sort by day
+              weekWorkouts.sort((a, b) => a.day - b.day);
+              newWorkoutsByWeek[weekNum] = weekWorkouts;
+            }
+          });
+
+          setWorkoutsByWeek(newWorkoutsByWeek);
+        } else {
+           // Plan not found, maybe clear or keep empty
+           setWorkoutsByWeek({ 1: [], 2: [], 3: [], 4: [] });
+        }
+      } catch (error) {
+        console.error("Error fetching plan:", error);
+        Alert.alert("Error", "Failed to load plan for this focus.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlan();
+  }, [focus]);
 
   // Get current week's workouts
   const currentWorkouts = workoutsByWeek[selectedWeek] || [];
@@ -44,7 +138,7 @@ export default function CreateProgramScreen() {
       if (data && action === 'add' && targetId === 'program_workout') {
         SelectionStore.clear();
 
-        setWorkoutsByWeek(prev => {
+        setWorkoutsByWeek((prev: any) => {
           const currentWeekWorkouts = prev[selectedWeek] ? [...prev[selectedWeek]] : [];
           const nextDay = currentWeekWorkouts.length + 1;
           
@@ -130,7 +224,7 @@ export default function CreateProgramScreen() {
   };
 
   const removeWorkout = (id: number) => {
-    const updatedWeekWorkouts = currentWorkouts.filter(w => w.id !== id).map((w, index) => ({
+    const updatedWeekWorkouts = currentWorkouts.filter((w: any) => w.id !== id).map((w: any, index: number) => ({
       ...w,
       day: index + 1
     }));
@@ -246,11 +340,15 @@ export default function CreateProgramScreen() {
           </View>
 
           <View style={styles.workoutsContainer}>
-            {currentWorkouts.map((item, index) => (
-              <View key={item.id}>
-                {item.type === 'workout' ? (
-                  <View style={[styles.workoutCard, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder }]}>
-                    <View style={styles.workoutHeader}>
+            {loading ? (
+              <ActivityIndicator size="large" color={theme.primary} style={{ marginTop: 20 }} />
+            ) : (
+              <>
+                {currentWorkouts.map((item: any, index: number) => (
+                  <View key={item.id}>
+                    {item.type === 'workout' ? (
+                      <View style={[styles.workoutCard, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder }]}>
+                        <View style={styles.workoutHeader}>
                       <View>
                         <View style={styles.dayBadge}>
                           <Text style={styles.dayBadgeText}>DAY {item.day}</Text>
@@ -270,7 +368,7 @@ export default function CreateProgramScreen() {
                     
                     {item.images.length > 0 && (
                       <View style={styles.avatarsContainer}>
-                        {item.images.map((img, idx) => (
+                        {item.images.map((img: string, idx: number) => (
                           <Image 
                             key={idx}
                             source={{ uri: img }} 
@@ -335,6 +433,8 @@ export default function CreateProgramScreen() {
                 <Text style={[styles.addRestText, { color: theme.primary }]}>Add Rest Day</Text>
               </TouchableOpacity>
             </View>
+              </>
+            )}
           </View>
         </View>
 

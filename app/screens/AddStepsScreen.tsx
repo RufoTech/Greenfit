@@ -130,7 +130,6 @@ export default function AddStepsScreen() {
             </View>
             <View style={styles.motivationContainer}>
                 <Text style={styles.motivationTitle}>Keep moving!</Text>
-                <Text style={styles.motivationSubtitle}>Hərəkətdə qal!</Text>
             </View>
         </View>
 
@@ -138,7 +137,7 @@ export default function AddStepsScreen() {
         <View style={styles.section}>
             <View style={styles.card}>
                 <View style={styles.cardHeader}>
-                    <Text style={styles.cardLabel}>Daily Goal | Gündəlik hədəf</Text>
+                    <Text style={styles.cardLabel}>Daily Goal</Text>
                     <Text style={styles.percentageText}>{pct}%</Text>
                 </View>
                 <View style={styles.barBackground}>
@@ -151,7 +150,7 @@ export default function AddStepsScreen() {
         <View style={styles.section}>
             <View style={styles.sectionHeader}>
                 <View style={styles.sectionTitleContainer}>
-                    <Text style={styles.sectionTitle}>Monthly Activity | Aylıq fəaliyyət</Text>
+                    <Text style={styles.sectionTitle}>Monthly Activity</Text>
                     <TouchableOpacity 
                         style={styles.expandButton}
                         onPress={() => setCalOpen(!calOpen)}

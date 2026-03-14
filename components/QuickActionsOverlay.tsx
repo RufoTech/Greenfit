@@ -174,6 +174,13 @@ export default function QuickActionsOverlay({ visible, onClose }: QuickActionsOv
               iconName="library-add" 
               onPress={() => handleActionPress('/screens/ExerciseLibraryScreen')}
           />
+          <QuickActionButton 
+              title="Monthly Workout" 
+              subtitle="" 
+              IconComponent={MaterialIcons} 
+              iconName="calendar-today" 
+              onPress={() => handleActionPress('/screens/MonthlyWorkoutLibraryScreen')}
+          />
         </View>
 
         <View style={styles.closeButtonContainer}>
