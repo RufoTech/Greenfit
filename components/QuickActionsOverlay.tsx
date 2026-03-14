@@ -147,7 +147,7 @@ export default function QuickActionsOverlay({ visible, onClose }: QuickActionsOv
               onPress={() => handleActionPress('/screens/LogWeightScreen')}
           />
           <QuickActionButton 
-              title="Program library" 
+              title="My Program " 
               subtitle="" 
               IconComponent={MaterialIcons} 
               iconName="playlist-add-check" 
@@ -160,6 +160,15 @@ export default function QuickActionsOverlay({ visible, onClose }: QuickActionsOv
               iconName="fitness-center" 
               onPress={() => handleActionPress('/screens/WorkoutLibraryScreen')}
           />
+          <QuickActionButton 
+              title="Prebuilt exercises" 
+              subtitle="" 
+              IconComponent={MaterialIcons} 
+              iconName="dashboard" 
+              onPress={() => handleActionPress('/screens/FeaturedRoutinesScreen')}
+          />
+          {/* Add a dummy view to align the last row elements to the left (start) when using space-between */}
+          <View style={styles.actionButton} />
         </View>
 
         <View style={styles.closeButtonContainer}>

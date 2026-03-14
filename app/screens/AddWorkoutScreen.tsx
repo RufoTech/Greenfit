@@ -10,7 +10,9 @@ import {
   Platform,
   TextInput,
   ImageBackground,
-  ActivityIndicator,
+  Alert,
+  Dimensions,
+  ActivityIndicator
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -134,6 +136,37 @@ export default function AddWorkoutScreen() {
     router.back();
   };
 
+  const handleDeleteCustomWorkout = async (workoutId: string, event: any) => {
+    event.stopPropagation(); // Prevent navigation to details
+    
+    Alert.alert(
+      "Delete Workout",
+      "Are you sure you want to delete this custom workout?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await firestore().collection('customUserWorkouts').doc(workoutId).delete();
+              // State update will happen automatically via onSnapshot listener if we had one,
+              // but here we fetched once. So we need to manually update state or re-fetch.
+              // Since we are using a mix of snapshot (system) and get (custom), let's manually filter.
+              setWorkouts(prev => prev.filter(w => w.id !== workoutId));
+            } catch (error) {
+              console.error("Error deleting workout:", error);
+              Alert.alert("Error", "Failed to delete workout.");
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const filteredWorkouts = workouts.filter(workout => {
     const matchesSearch = workout.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || 
@@ -252,6 +285,16 @@ export default function AddWorkoutScreen() {
                 <View style={[styles.levelBadge, { backgroundColor: workout.levelColor }]}>
                   <Text style={styles.levelText}>{workout.level}</Text>
                 </View>
+
+                {/* Delete Button for Custom Workouts */}
+                {workout.category === 'Custom' && (
+                  <TouchableOpacity 
+                    style={styles.deleteButton}
+                    onPress={(e) => handleDeleteCustomWorkout(workout.id, e)}
+                  >
+                    <MaterialIcons name="delete" size={20} color="#ef4444" />
+                  </TouchableOpacity>
+                )}
               </ImageBackground>
               
               <View style={styles.cardFooter}>
@@ -424,6 +467,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   levelBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -433,6 +479,17 @@ const styles = StyleSheet.create({
     color: '#1f230f',
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cardFooter: {
     flexDirection: 'row',
