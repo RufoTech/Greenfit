@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,11 +10,13 @@ import {
   Platform,
   TextInput,
   ImageBackground,
-  Dimensions
+  Dimensions,
+  ActivityIndicator
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import firestore from '@react-native-firebase/firestore';
 
 const { width } = Dimensions.get('window');
 
@@ -28,46 +30,85 @@ const TEXT_LIGHT = "#0f172a";
 const TEXT_DARK = "#f1f5f9";
 const TEXT_MUTED_DARK = "#94a3b8";
 
-// Dummy Data
-const categories = ["All", "Full Body", "HIIT", "Strength", "Yoga", "Cardio"];
+interface Workout {
+  id: string;
+  title: string;
+  duration: string;
+  exercises: number;
+  level: string;
+  levelColor: string;
+  image: string;
+  category: string;
+  targetMuscle?: string;
+}
 
-const routines = [
-  {
-    id: 1,
-    title: "Savage Chest Workout",
-    category: "Pro",
-    muscle: "Chest, Triceps",
-    duration: "45 mins",
-    exercises: "8 Exercises",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuC18TF4YHICw5HKPL2P62kTUTtsP1hWi13rJjuIxIdbpRV46gBDG8TJew1u30leCZwWSXY9o9AzXzpHQ6MhpyrfmLSYiuq9GX-CCsKlIWCLv7_74bbW8Gq2_ypyuaoYcHNywbs8YfVIfYSJJolHGn2oprtR8tQiqzC8JDsH_VVGhY4YLPjJN7VN7Mgrlwu1uKBto0ZudDC2bTbK34b4onw8Mvq5Z7UEItu0JdI2zfGEC2KagA0GhlrZusA8etntg0csOxsm8WPuRDA",
-    levelColor: PRIMARY
-  },
-  {
-    id: 2,
-    title: "Core Crusher",
-    category: "Intermediate",
-    muscle: "Abs, Core",
-    duration: "20 mins",
-    exercises: "6 Exercises",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBK7aEhRDeh81Akem-89TC9JqXOnnU_YHxAO59U8eARWwEmmFOlWCyj8NOWhQ9-XAQCyu_ACBSSbDHaT_tX-o1C3-5LapNrgB73sc6bfXg-P5hjIvDSsVm2s4Hta3YZF4s1gizq3padTcTZC1dLXn0h9erF6YVprvyejI-qbH5QDw5mfGTY_MqpdPB2PtEz1QEFegFfxSnNn97TxplyXxa70sdSfVREHAX2v7HKuDjVw1b2fAkZQAzNQHRiJR3U7FRzA7lWAhHmS9Q",
-    levelColor: "#3b82f6"
-  },
-  {
-    id: 3,
-    title: "Morning Flow Yoga",
-    category: "Beginner",
-    muscle: "Full Body",
-    duration: "15 mins",
-    exercises: "10 Flows",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuATmOZwkmt5fQp4NxaE4UYoEOfrn_1kB5G5rDzBVB9dsbUp5RT_mc1gp5BW8i5AyiKrWVlqsBnlEp7AOBhdLp0cd0QR9rAVFhD8Ou93pVFSjgHeMU_28jmKGAT9tS7pciWKT7S2ovqrI2xrCUefQ3XI1wGVZLASE4Nt3N2At-iAkdF57BoKkvSJm9JFomgOv7mIPNp6McCwgPJLjI9w790QC17C5ROPOqjKaRMyRXBiXc0CexSgElzCxqGMvAaoqRQvk239QDQoNRo",
-    levelColor: "#10b981"
-  }
-];
+const categories = ["All"]; // Default, will be populated dynamically
 
 export default function FeaturedRoutinesScreen() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [categoryList, setCategoryList] = useState(categories);
+
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      const unsubscribe = firestore()
+        .collection('workout_programs')
+        .onSnapshot(querySnapshot => {
+          const workoutsData: Workout[] = [];
+          const fetchedCategories = new Set<string>();
+          
+          querySnapshot.forEach(documentSnapshot => {
+            const data = documentSnapshot.data();
+            
+            // Map level color based on level text
+            let levelColor = PRIMARY; // Default Green
+            const levelLower = (data.level || '').toLowerCase();
+            if (levelLower.includes('beginner')) levelColor = '#3b82f6'; // Blue
+            else if (levelLower.includes('advanced')) levelColor = '#ef4444'; // Red
+
+            if (data.workout_type_name) {
+                fetchedCategories.add(data.workout_type_name);
+            }
+            
+            workoutsData.push({
+              id: documentSnapshot.id,
+              title: data.name || 'Untitled Workout',
+              duration: data.duration ? (data.duration.includes('min') ? data.duration : `${data.duration} mins`) : '0 mins',
+              exercises: data.exercises ? data.exercises.length : 0, 
+              level: data.level || 'General',
+              levelColor: levelColor,
+              image: data.coverImage || 'https://via.placeholder.com/300', 
+              category: data.workout_type_name || 'General', 
+              targetMuscle: data.targetMuscles ? data.targetMuscles.join(', ') : 'Full Body'
+            });
+          });
+
+          // Update Categories
+          const newCategories = ["All", ...Array.from(fetchedCategories)];
+          setCategoryList(newCategories);
+
+          setWorkouts(workoutsData);
+          setLoading(false);
+        }, error => {
+          console.error("Error fetching workouts: ", error);
+          setLoading(false);
+        });
+
+      return () => unsubscribe();
+    }, [])
+  );
+
+  const filteredWorkouts = workouts.filter(workout => {
+    const matchesSearch = workout.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'All' || 
+                            (workout.category && workout.category.toLowerCase().includes(selectedCategory.toLowerCase())) ||
+                            (workout.targetMuscle && workout.targetMuscle.toLowerCase().includes(selectedCategory.toLowerCase()));
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -105,7 +146,7 @@ export default function FeaturedRoutinesScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoriesContent}
         >
-          {categories.map((cat, index) => (
+          {categoryList.map((cat, index) => (
             <TouchableOpacity
               key={index}
               style={[
@@ -125,51 +166,64 @@ export default function FeaturedRoutinesScreen() {
 
       {/* Main List */}
       <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-        {routines.map((routine) => (
-          <View key={routine.id} style={styles.card}>
-            <View style={styles.imageContainer}>
-              <ImageBackground source={{ uri: routine.image }} style={styles.cardImage}>
-                <LinearGradient
-                  colors={['rgba(18, 20, 10, 0.8)', 'transparent', 'transparent']}
-                  start={{ x: 0, y: 1 }}
-                  end={{ x: 0, y: 0 }}
-                  style={StyleSheet.absoluteFill}
-                />
-                <View style={styles.levelBadgeContainer}>
-                   <View style={[styles.levelBadge, { backgroundColor: routine.levelColor }]}>
-                     <Text style={styles.levelText}>{routine.category}</Text>
-                   </View>
-                </View>
-              </ImageBackground>
-            </View>
-
-            <View style={styles.cardContent}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>{routine.title}</Text>
-              </View>
-              
-              <View style={styles.metaContainer}>
-                <View style={styles.metaItem}>
-                  <MaterialIcons name="fitness-center" size={16} color={PRIMARY} />
-                  <Text style={styles.metaText}>{routine.muscle}</Text>
-                </View>
-                <View style={styles.metaItem}>
-                  <MaterialIcons name="schedule" size={16} color={PRIMARY} />
-                  <Text style={styles.metaText}>{routine.duration}</Text>
-                </View>
-                <View style={styles.metaItem}>
-                  <MaterialIcons name="list-alt" size={16} color={PRIMARY} />
-                  <Text style={styles.metaText}>{routine.exercises}</Text>
-                </View>
+        {loading ? (
+          <ActivityIndicator size="large" color={PRIMARY} style={{ marginTop: 20 }} />
+        ) : (
+          filteredWorkouts.map((workout) => (
+            <View key={workout.id} style={styles.card}>
+              <View style={styles.imageContainer}>
+                <ImageBackground source={{ uri: workout.image }} style={styles.cardImage}>
+                  <LinearGradient
+                    colors={['rgba(18, 20, 10, 0.8)', 'transparent', 'transparent']}
+                    start={{ x: 0, y: 1 }}
+                    end={{ x: 0, y: 0 }}
+                    style={StyleSheet.absoluteFill}
+                  />
+                  <View style={styles.levelBadgeContainer}>
+                     <View style={[styles.levelBadge, { backgroundColor: workout.levelColor }]}>
+                       <Text style={styles.levelText}>{workout.level}</Text>
+                     </View>
+                  </View>
+                </ImageBackground>
               </View>
 
-              <TouchableOpacity style={styles.startButton}>
-                <Text style={styles.startButtonText}>Start Workout</Text>
-                <MaterialIcons name="play-circle-filled" size={20} color={BACKGROUND_DARK} />
-              </TouchableOpacity>
+              <View style={styles.cardContent}>
+                <View style={styles.cardHeader}>
+                  <Text style={styles.cardTitle}>{workout.title}</Text>
+                </View>
+                
+                <View style={styles.metaContainer}>
+                  <View style={styles.metaItem}>
+                    <MaterialIcons name="fitness-center" size={16} color={PRIMARY} />
+                    <Text style={styles.metaText}>{workout.targetMuscle || 'Full Body'}</Text>
+                  </View>
+                  <View style={styles.metaItem}>
+                    <MaterialIcons name="schedule" size={16} color={PRIMARY} />
+                    <Text style={styles.metaText}>{workout.duration}</Text>
+                  </View>
+                  <View style={styles.metaItem}>
+                    <MaterialIcons name="list-alt" size={16} color={PRIMARY} />
+                    <Text style={styles.metaText}>{workout.exercises} Exercises</Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity 
+                  style={styles.startButton}
+                  onPress={() => router.push({
+                    pathname: '/screens/WorkoutDetailsScreen',
+                    params: { 
+                      id: workout.id,
+                      isCustom: 'false'
+                    }
+                  })}
+                >
+                  <Text style={styles.startButtonText}>Start Workout</Text>
+                  <MaterialIcons name="play-circle-filled" size={20} color={BACKGROUND_DARK} />
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        ))}
+          ))
+        )}
         <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
