@@ -98,21 +98,7 @@ export default function DashboardScreen() {
           </View>
           
           <View style={styles.headerRight}>
-            <TouchableOpacity 
-              onPress={() => setIsDark(!isDark)}
-              style={[styles.iconButton, { backgroundColor: isDark ? 'rgba(204, 255, 0, 0.1)' : '#e2e8f0' }]}
-            >
-              {isDark ? 
-                <Feather name="sun" size={20} color={currentTheme.primary} /> : 
-                <Feather name="moon" size={20} color="#0f172a" />
-              }
-            </TouchableOpacity>
-            <TouchableOpacity 
-              onPress={handleLogout}
-              style={[styles.iconButton, { backgroundColor: isDark ? 'rgba(255, 59, 48, 0.1)' : '#fee2e2' }]}
-            >
-              <MaterialIcons name="logout" size={20} color={isDark ? '#ff3b30' : '#ef4444'} />
-            </TouchableOpacity>
+            
           </View>
         </View>
 
@@ -224,9 +210,6 @@ export default function DashboardScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitleLarge, { color: currentTheme.text }]}>Today's Workout</Text>
-            <TouchableOpacity>
-              <Text style={[styles.seeAllText, { color: '#ccff00' }]}>View All</Text>
-            </TouchableOpacity>
           </View>
           
           <TouchableOpacity 
