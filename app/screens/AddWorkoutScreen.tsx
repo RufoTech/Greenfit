@@ -16,6 +16,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 
 // Define Workout interface
 interface Workout {
@@ -75,40 +76,35 @@ export default function AddWorkoutScreen() {
         });
 
         // Also fetch custom user workouts
-        const userId = 'current-user-id'; // Replace with actual auth
-        firestore()
-          .collection('customUserWorkouts')
-          .where('userId', '==', userId)
-          .get()
-          .then(customSnapshot => {
-            customSnapshot.forEach(doc => {
-              const data = doc.data();
-              workoutsData.push({
-                id: doc.id,
-                title: data.title || 'Custom Workout',
-                duration: data.duration ? (data.duration.includes('min') ? data.duration : `${data.duration} mins`) : '0 mins',
-                exercises: data.exerciseCount || 0,
-                level: data.level || 'Custom',
-                levelColor: '#a855f7', // Purple for custom
-                image: data.image || 'https://via.placeholder.com/300',
-                category: 'Custom'
+        const user = auth().currentUser;
+        if (user) {
+          firestore()
+            .collection('customUserWorkouts')
+            .where('userId', '==', user.uid)
+            .get()
+            .then(customSnapshot => {
+              customSnapshot.forEach(doc => {
+                const data = doc.data();
+                workoutsData.push({
+                  id: doc.id,
+                  title: data.title || 'Custom Workout',
+                  duration: data.duration ? (data.duration.includes('min') ? data.duration : `${data.duration} mins`) : '0 mins',
+                  exercises: data.exerciseCount || 0,
+                  level: data.level || 'Custom',
+                  levelColor: '#a855f7', // Purple for custom
+                  image: data.image || 'https://via.placeholder.com/300',
+                  category: 'Custom'
+                });
+                fetchedCategories.add('Custom');
               });
-              fetchedCategories.add('Custom');
+  
+              // Update state
+              updateWorkoutsState(fetchedCategories, workoutsData);
             });
-
-            // Update state
-            const newCategories = [
-              { id: 'all', label: 'All' },
-              ...Array.from(fetchedCategories).map(cat => ({
-                id: cat,
-                label: cat
-              }))
-            ];
-            
-            setCategoryList(newCategories);
-            setWorkouts(workoutsData);
-            setLoading(false);
-          });
+        } else {
+            // Update state even if no user, just with system workouts
+            updateWorkoutsState(fetchedCategories, workoutsData);
+        }
 
       }, error => {
         console.error("Error fetching workouts: ", error);
@@ -117,6 +113,20 @@ export default function AddWorkoutScreen() {
 
     return () => unsubscribeSystem();
   }, []);
+
+  const updateWorkoutsState = (fetchedCategories: Set<string>, workoutsData: Workout[]) => {
+    const newCategories = [
+      { id: 'all', label: 'All' },
+      ...Array.from(fetchedCategories).map(cat => ({
+        id: cat,
+        label: cat
+      }))
+    ];
+    
+    setCategoryList(newCategories);
+    setWorkouts(workoutsData);
+    setLoading(false);
+  };
 
   const handleAddWorkout = (workoutId: string) => {
     // Logic to add workout to the program would go here

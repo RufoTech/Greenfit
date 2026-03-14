@@ -17,6 +17,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 
 const { width } = Dimensions.get('window');
 
@@ -58,7 +59,9 @@ export default function WorkoutDetailsScreen() {
     if (!id) return;
 
     // Check if workout is already saved for current user (mocked ID for now)
-    const userId = 'current-user-id'; // Replace with actual auth logic
+    const user = auth().currentUser;
+    if (!user) return;
+    const userId = user.uid;
 
     const checkSavedStatus = async () => {
        try {
@@ -214,7 +217,12 @@ export default function WorkoutDetailsScreen() {
     if (!workout) return;
 
     // Use current user ID (mocked for now)
-    const userId = 'current-user-id';
+    const user = auth().currentUser;
+    if (!user) {
+        alert("Please log in to save workouts.");
+        return;
+    }
+    const userId = user.uid;
 
     try {
       if (isSaved && savedDocId) {

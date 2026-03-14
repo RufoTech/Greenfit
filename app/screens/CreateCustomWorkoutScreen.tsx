@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -58,8 +59,8 @@ export default function CreateCustomWorkoutScreen() {
           id: Math.random().toString(36).substr(2, 9),
           name: data.name,
           mainImage: data.mainImage || data.targetMuscleImage || 'https://via.placeholder.com/150',
-          reps: data.reps || '10',
-          sets: data.sets || '3',
+          reps: '',
+          sets: '',
           type: data.type || data.category || 'General'
         };
 
@@ -155,7 +156,12 @@ export default function CreateCustomWorkoutScreen() {
     }
 
     try {
-      const userId = 'current-user-id'; // In real app, get from Auth context
+      const user = auth().currentUser;
+      if (!user) {
+        Alert.alert("Error", "You must be logged in to create a workout.");
+        return;
+      }
+      const userId = user.uid;
       
       // Save to new customUserWorkouts collection as requested
       await firestore().collection('customUserWorkouts').add({
@@ -317,7 +323,7 @@ export default function CreateCustomWorkoutScreen() {
                             value={exercise.sets}
                             onChangeText={(val) => handleUpdateExercise(exercise.id, 'sets', val)}
                             keyboardType="numeric"
-                            placeholder="3"
+                            placeholder="-"
                             placeholderTextColor="#64748b"
                           />
                           <Text style={styles.setRepLabel}>Sets</Text>
@@ -329,7 +335,7 @@ export default function CreateCustomWorkoutScreen() {
                             value={exercise.reps}
                             onChangeText={(val) => handleUpdateExercise(exercise.id, 'reps', val)}
                             keyboardType="numeric"
-                            placeholder="10"
+                            placeholder="-"
                             placeholderTextColor="#64748b"
                           />
                           <Text style={styles.setRepLabel}>Reps</Text>

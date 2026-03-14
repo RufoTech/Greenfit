@@ -16,6 +16,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 
 const { width } = Dimensions.get('window');
 
@@ -44,7 +45,12 @@ export default function ProgramLibraryScreen() {
 
   useEffect(() => {
     // Mock user ID
-    const userId = 'current-user-id';
+    const user = auth().currentUser;
+    if (!user) {
+        setLoading(false);
+        return;
+    }
+    const userId = user.uid;
 
     const unsubscribe = firestore()
       .collection('saved_workouts')
