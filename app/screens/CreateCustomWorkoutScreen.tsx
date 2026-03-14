@@ -190,6 +190,12 @@ export default function CreateCustomWorkoutScreen() {
     }
   };
 
+  const handleDurationChange = (text: string) => {
+    // Only allow numeric characters
+    const numericValue = text.replace(/[^0-9]/g, '');
+    setDuration(numericValue);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#12140a" />
@@ -235,8 +241,9 @@ export default function CreateCustomWorkoutScreen() {
                 placeholder="45"
                 placeholderTextColor="#64748b"
                 value={duration}
-                onChangeText={setDuration}
+                onChangeText={handleDurationChange}
                 keyboardType="numeric"
+                maxLength={3}
               />
             </View>
             <View style={{ width: 12 }} />

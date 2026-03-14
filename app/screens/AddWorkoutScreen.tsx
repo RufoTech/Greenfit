@@ -31,6 +31,7 @@ interface Workout {
   levelColor: string;
   image: string;
   category: string;
+  targetMuscle?: string;
 }
 
 const categories = [
@@ -71,12 +72,13 @@ export default function AddWorkoutScreen() {
             workoutsData.push({
               id: documentSnapshot.id,
               title: data.name || 'Untitled Workout',
-              duration: data.duration || '0 mins',
+              duration: data.duration || '0',
               exercises: data.exercises ? data.exercises.length : 0, 
               level: data.level || 'General',
               levelColor: levelColor,
               image: data.coverImage || 'https://via.placeholder.com/300', 
               category: data.workout_type_name || 'General', 
+              targetMuscle: data.targetMuscles ? data.targetMuscles.join(', ') : 'Full Body'
             });
           });
 
@@ -93,12 +95,13 @@ export default function AddWorkoutScreen() {
                   workoutsData.push({
                     id: doc.id,
                     title: data.title || 'Custom Workout',
-                    duration: data.duration ? (data.duration.includes('min') ? data.duration : `${data.duration} mins`) : '0 mins',
+                    duration: data.duration || '0',
                     exercises: data.exerciseCount || 0,
                     level: data.level || 'Custom',
                     levelColor: '#a855f7', // Purple for custom
                     image: data.image || 'https://via.placeholder.com/300',
-                    category: 'Custom'
+                    category: 'Custom',
+                    targetMuscle: data.target || 'Full Body'
                   });
                   fetchedCategories.add('Custom');
                 });
@@ -304,7 +307,22 @@ export default function AddWorkoutScreen() {
               <View style={styles.cardFooter}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.cardTitle}>{workout.title}</Text>
-                  <Text style={styles.cardSubtitle}>{workout.duration} • {workout.exercises} exercises</Text>
+                  <View style={styles.metaRow}>
+                    <View style={styles.metaItem}>
+                      <MaterialIcons name="schedule" size={14} color="#ccff00" />
+                      <Text style={styles.metaText}>{workout.duration} Min</Text>
+                    </View>
+                    <Text style={styles.metaDot}>•</Text>
+                    <View style={styles.metaItem}>
+                      <MaterialIcons name="fitness-center" size={14} color="#ccff00" />
+                      <Text style={styles.metaText}>{workout.exercises} exercises</Text>
+                    </View>
+                    <Text style={styles.metaDot}>•</Text>
+                    <View style={styles.metaItem}>
+                      <MaterialIcons name="accessibility" size={14} color="#ccff00" />
+                      <Text style={styles.metaText}>{workout.targetMuscle || 'Full Body'}</Text>
+                    </View>
+                  </View>
                 </View>
                 <TouchableOpacity 
                   style={styles.addButton}
@@ -498,6 +516,7 @@ const styles = StyleSheet.create({
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 16,
     gap: 12,
   },
@@ -505,11 +524,27 @@ const styles = StyleSheet.create({
     color: '#f1f5f9',
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 8,
   },
-  cardSubtitle: {
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  metaText: {
     color: '#94a3b8',
-    fontSize: 14,
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  metaDot: {
+    color: '#64748b',
+    fontSize: 12,
   },
   addButton: {
     width: 44,
